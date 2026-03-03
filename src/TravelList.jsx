@@ -15,7 +15,9 @@ export default function TravelList() {
 
   useEffect(() => {
     let unsubscribeSnapshot;
-
+const handleDelete = async (id) => {
+  await deleteDoc(doc(db, "travels", id));
+};
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         const q = query(
