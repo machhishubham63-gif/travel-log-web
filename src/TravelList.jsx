@@ -4,7 +4,9 @@ import {
   collection,
   query,
   where,
-  onSnapshot
+  onSnapshot,
+  deleteDoc,
+  doc
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
