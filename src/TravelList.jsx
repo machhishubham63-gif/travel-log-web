@@ -1,36 +1,54 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "./firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy
+} from "firebase/firestore";
 
 export default function TravelList() {
   const [travels, setTravels] = useState([]);
 
-  const fetchTravels = async () => {
-    const q = query(
-      collection(db, "travels"),
-      where("userId", "==", auth.currentUser.uid)
-    );
-
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    setTravels(data);
-  };
-
   useEffect(() => {
+    const fetchTravels = async () => {
+      if (!auth.currentUser) return;
+
+      const q = query(
+        collection(db, "travels"),
+        where("userId", "==", auth.currentUser.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      const snapshot = await getDocs(q);
+
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setTravels(data);
+    };
+
     fetchTravels();
   }, []);
 
   return (
     <div>
       {travels.map(travel => (
-        <div key={travel.id} style={{ border: "1px solid gray", margin: "10px", padding: "10px" }}>
+        <div
+          key={travel.id}
+          style={{
+            background: "#1e1e1e",
+            padding: "15px",
+            marginBottom: "12px",
+            borderRadius: "10px"
+          }}
+        >
           <h3>{travel.location}</h3>
-          <p>Date: {travel.date}</p>
-          <p>Expense: ₹{travel.expense}</p>
+          <p>📅 {travel.date}</p>
+          <p>💰 ₹{travel.expense}</p>
           <p>{travel.notes}</p>
         </div>
       ))}
