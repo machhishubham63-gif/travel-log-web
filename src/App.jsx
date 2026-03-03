@@ -10,31 +10,32 @@ function Dashboard() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-  <div
-    style={{
-      maxWidth: "500px",
-      margin: "auto",
-      padding: "20px",
-      fontFamily: "sans-serif"
-    }}
-  >
-    <h1 style={{ textAlign: "center" }}>My Travel Log</h1>
-
-    <button
-      onClick={() => signOut(auth)}
+    <div
       style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "20px"
+        maxWidth: "500px",
+        margin: "auto",
+        padding: "20px",
+        fontFamily: "sans-serif"
       }}
     >
-      Logout
-    </button>
+      <h1 style={{ textAlign: "center" }}>My Travel Log</h1>
 
-    <TravelForm refresh={() => setRefreshKey(old => old + 1)} />
-    <TravelList key={refreshKey} />
-  </div>
-);
+      <button
+        onClick={() => signOut(auth)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "20px"
+        }}
+      >
+        Logout
+      </button>
+
+      <TravelForm refresh={() => setRefreshKey(old => old + 1)} />
+      <TravelList key={refreshKey} />
+    </div>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(null);
