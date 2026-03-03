@@ -6,37 +6,32 @@ import TravelForm from "./TravelForm";
 import TravelList from "./TravelList";
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [user, setUser] = useState(undefined); // undefined = loading
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
+  // Still checking auth
+  if (user === undefined) {
     return <div style={{ padding: "20px" }}>Loading...</div>;
   }
 
+  // Not logged in
   if (!user) {
     return <Login />;
   }
 
+  // Logged in
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Travel Log Dashboard</h2>
-
-      <TravelForm
-        user={user}
-        onAdd={() => setRefreshKey((prev) => prev + 1)}
-      />
-
-      <TravelList user={user} key={refreshKey} />
+      <h2>Travel Log</h2>
+      <TravelForm user={user} />
+      <TravelList user={user} />
     </div>
   );
 }
