@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { db, auth } from "./firebase";
+import { db } from "./firebase";
 import {
   collection,
   query,
@@ -13,29 +13,23 @@ export default function TravelList({ user }) {
   const [travels, setTravels] = useState([]);
 
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  const q = query(
-    collection(db, "travels"),
-    where("userId", "==", user.uid)
-  );
+    const q = query(
+      collection(db, "travels"),
+      where("userId", "==", user.uid)
+    );
 
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const data = snapshot.docs.map((docItem) => ({
-      id: docItem.id,
-      ...docItem.data()
-    }));
-    setTravels(data);
-  });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...docItem.data()
+      }));
+      setTravels(data);
+    });
 
-  return () => unsubscribe();
-}, [user]);
-
-    return () => {
-      if (unsubscribeSnapshot) unsubscribeSnapshot();
-      unsubscribeAuth();
-    };
-  }, []);
+    return () => unsubscribe();
+  }, [user]);
 
   const handleDelete = async (id) => {
     try {
