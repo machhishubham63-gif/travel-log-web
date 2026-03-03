@@ -1,31 +1,29 @@
 import { useState } from "react";
-import { db, auth } from "./firebase";
+import { db } from "./firebase";
 import { collection, addDoc } from "firebase/firestore";
 
-export default function TravelForm({ refresh }) {
+export default function TravelForm({ user }) {
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
   const [expense, setExpense] = useState("");
   const [notes, setNotes] = useState("");
 
   const handleSubmit = async () => {
-    if (!location || !date) return;
+    if (!location || !date || !user) return;
 
     await addDoc(collection(db, "travels"), {
-  userId: user.uid,
-  location,
-  date,
-  expense: Number(expense) || 0,
-  notes,
-  createdAt: new Date()
-});
+      userId: user.uid,
+      location,
+      date,
+      expense: Number(expense) || 0,
+      notes,
+      createdAt: new Date()
+    });
 
     setLocation("");
     setDate("");
     setExpense("");
     setNotes("");
-
-    refresh();
   };
 
   return (
