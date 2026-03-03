@@ -2,36 +2,39 @@ import { useEffect, useState } from "react";
 import { db, auth } from "./firebase";
 import {
   collection,
-  getDocs,
   query,
   where,
-  orderBy
+  onSnapshot
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function TravelList() {
   const [travels, setTravels] = useState([]);
 
   useEffect(() => {
-    const fetchTravels = async () => {
-      if (!auth.currentUser) return;
+    let unsubscribeSnapshot;
 
-      const q = query(
-        collection(db, "travels"),
-        where("userId", "==", auth.currentUser.uid),
-        orderBy("createdAt", "desc")
-      );
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const q = query(
+          collection(db, "travels"),
+          where("userId", "==", user.uid)
+        );
 
-      const snapshot = await getDocs(q);
+        unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setTravels(data);
+        });
+      }
+    });
 
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      setTravels(data);
+    return () => {
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+      unsubscribeAuth();
     };
-
-    fetchTravels();
   }, []);
 
   return (
@@ -43,7 +46,8 @@ export default function TravelList() {
             background: "#1e1e1e",
             padding: "15px",
             marginBottom: "12px",
-            borderRadius: "10px"
+            borderRadius: "10px",
+            color: "white"
           }}
         >
           <h3>{travel.location}</h3>
