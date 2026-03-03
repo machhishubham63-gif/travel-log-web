@@ -16,10 +16,9 @@ export default function TravelForm({ refresh }) {
   location,
   date,
   expense: Number(expense) || 0,
-  notes
-      notes,
-      createdAt: new Date()
-    });
+  notes,
+  createdAt: new Date()
+});
 
     setLocation("");
     setDate("");
