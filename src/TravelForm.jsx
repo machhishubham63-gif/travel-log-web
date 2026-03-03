@@ -12,7 +12,7 @@ export default function TravelForm({ refresh }) {
     if (!location || !date) return;
 
     await addDoc(collection(db, "travels"), {
-      userId: auth.currentUser.uid,
+      userId: user.uid
       location,
       date,
       expense: Number(expense) || 0,
