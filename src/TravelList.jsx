@@ -8,30 +8,28 @@ import {
   deleteDoc,
   doc
 } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
 
-export default function TravelList() {
+export default function TravelList({ user }) {
   const [travels, setTravels] = useState([]);
 
   useEffect(() => {
-    let unsubscribeSnapshot;
+  if (!user) return;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const q = query(
-          collection(db, "travels"),
-          where("userId", "==", user.uid)
-        );
+  const q = query(
+    collection(db, "travels"),
+    where("userId", "==", user.uid)
+  );
 
-        unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-          const data = snapshot.docs.map((docItem) => ({
-            id: docItem.id,
-            ...docItem.data()
-          }));
-          setTravels(data);
-        });
-      }
-    });
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map((docItem) => ({
+      id: docItem.id,
+      ...docItem.data()
+    }));
+    setTravels(data);
+  });
+
+  return () => unsubscribe();
+}, [user]);
 
     return () => {
       if (unsubscribeSnapshot) unsubscribeSnapshot();
