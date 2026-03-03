@@ -58,6 +58,19 @@ const handleDelete = async (id) => {
           <p>📅 {travel.date}</p>
           <p>💰 ₹{travel.expense}</p>
           <p>{travel.notes}</p>
+          <button
+  onClick={() => handleDelete(travel.id)}
+  style={{
+    marginTop: "10px",
+    padding: "6px 10px",
+    background: "red",
+    color: "white",
+    border: "none",
+    borderRadius: "5px"
+  }}
+>
+  Delete
+</button>
         </div>
       ))}
     </div>
