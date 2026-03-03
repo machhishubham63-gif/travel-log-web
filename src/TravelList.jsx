@@ -46,31 +46,43 @@ export default function TravelList() {
       alert("Delete failed: " + error.message);
     }
   };
-const totalExpense = travels.reduce(
-  (sum, item) => sum + (item.expense || 0),
-  0
-);
-  return (
-  <div>
-    <div
-      style={{
-        background: "#2c2c2c",
-        padding: "15px",
-        borderRadius: "10px",
-        marginBottom: "20px",
-        textAlign: "center",
-        color: "white",
-        fontWeight: "bold",
-        fontSize: "18px"
-      }}
-    >
-      Total Travel Expense: ₹{totalExpense}
-    </div>
 
-    {travels.map((travel) => (
+  const totalExpense = travels.reduce(
+    (sum, item) => sum + (item.expense || 0),
+    0
+  );
+
+  return (
+    <div>
+      <div
+        style={{
+          background: "#2c2c2c",
+          padding: "15px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          textAlign: "center",
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "18px"
+        }}
+      >
+        Total Travel Expense: ₹{totalExpense}
+      </div>
+
+      {travels.map((travel) => (
+        <div
+          key={travel.id}
+          style={{
+            background: "#1e1e1e",
+            padding: "15px",
+            marginBottom: "12px",
+            borderRadius: "10px",
+            color: "white"
+          }}
+        >
           <h3>{travel.location}</h3>
-          <p>📅 {travel.date}</p>
-          <p>💰 ₹{travel.expense}</p>
+          <p>Date: {travel.date}</p>
+          <p>Expense: ₹{travel.expense}</p>
           <p>{travel.notes}</p>
 
           <button
