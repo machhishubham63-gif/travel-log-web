@@ -7,8 +7,8 @@ import TravelForm from "./TravelForm";
 import TravelList from "./TravelList";
 
 function Dashboard() {
-  const [refreshKey, setRefreshKey] = useState(0);
-
+  <TravelList user={auth.currentUser} 
+  key={refreshKey} />
   return (
     <div
       style={{
