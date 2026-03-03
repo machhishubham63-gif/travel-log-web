@@ -41,12 +41,14 @@ const handleDelete = async (id) => {
       <div
         key={travel.id}
         style={{
-          background: "#1e1e1e",
-          padding: "15px",
-          marginBottom: "12px",
-          borderRadius: "10px",
-          color: "white"
-        }}
+  background: "#1e1e1e",
+  padding: "15px",
+  marginBottom: "12px",
+  borderRadius: "10px",
+  color: "white",
+  position: "relative",
+  zIndex: 1
+}}
       >
         <h3>{travel.location}</h3>
         <p>📅 {travel.date}</p>
