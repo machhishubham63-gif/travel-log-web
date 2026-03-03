@@ -35,24 +35,43 @@ const handleDelete = async (id) => {
       }
     });
 
-    return () => {
-      if (unsubscribeSnapshot) unsubscribeSnapshot();
-      unsubscribeAuth();
-    };
-  }, []);
+    return (
+  <div>
+    {travels.map((travel) => (
+      <div
+        key={travel.id}
+        style={{
+          background: "#1e1e1e",
+          padding: "15px",
+          marginBottom: "12px",
+          borderRadius: "10px",
+          color: "white"
+        }}
+      >
+        <h3>{travel.location}</h3>
+        <p>📅 {travel.date}</p>
+        <p>💰 ₹{travel.expense}</p>
+        <p>{travel.notes}</p>
 
-  return (
-    <div>
-      {travels.map(travel => (
-        <div
-          key={travel.id}
+        <button
+          onClick={() => handleDelete(travel.id)}
           style={{
-            background: "#1e1e1e",
-            padding: "15px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-            color: "white"
+            marginTop: "12px",
+            padding: "8px",
+            width: "100%",
+            backgroundColor: "#ff4444",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer"
           }}
+        >
+          Delete
+        </button>
+      </div>
+    ))}
+  </div>
+);
         >
           <h3>{travel.location}</h3>
           <p>📅 {travel.date}</p>
