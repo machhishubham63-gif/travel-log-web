@@ -15,9 +15,7 @@ export default function TravelList() {
 
   useEffect(() => {
     let unsubscribeSnapshot;
-const handleDelete = async (id) => {
-  await deleteDoc(doc(db, "travels", id));
-};
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         const q = query(
@@ -26,74 +24,61 @@ const handleDelete = async (id) => {
         );
 
         unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-          const data = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+          const data = snapshot.docs.map((docItem) => ({
+            id: docItem.id,
+            ...docItem.data()
           }));
           setTravels(data);
         });
       }
     });
 
-    return (
-  <div>
-    {travels.map((travel) => (
-      <div
-        key={travel.id}
-        style={{
-  background: "#1e1e1e",
-  padding: "15px",
-  marginBottom: "12px",
-  borderRadius: "10px",
-  color: "white",
-  position: "relative",
-  zIndex: 1
-}}
-      >
-        <h3>{travel.location}</h3>
-        <p>📅 {travel.date}</p>
-        <p>💰 ₹{travel.expense}</p>
-        <p>{travel.notes}</p>
+    return () => {
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+      unsubscribeAuth();
+    };
+  }, []);
 
-        <button
-          onClick={() => handleDelete(travel.id)}
+  const handleDelete = async (id) => {
+    try {
+      await deleteDoc(doc(db, "travels", id));
+    } catch (error) {
+      alert("Delete failed: " + error.message);
+    }
+  };
+
+  return (
+    <div>
+      {travels.map((travel) => (
+        <div
+          key={travel.id}
           style={{
-  marginTop: "12px",
-  padding: "8px",
-  width: "100%",
-  backgroundColor: "#ff4444",
-  color: "white",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  position: "relative",
-  zIndex: 2
-}}
-        >
-          Delete
-        </button>
-      </div>
-    ))}
-  </div>
-);
+            background: "#1e1e1e",
+            padding: "15px",
+            marginBottom: "12px",
+            borderRadius: "10px",
+            color: "white"
+          }}
         >
           <h3>{travel.location}</h3>
           <p>📅 {travel.date}</p>
           <p>💰 ₹{travel.expense}</p>
           <p>{travel.notes}</p>
+
           <button
-  onClick={() => handleDelete(travel.id)}
-  style={{
-    marginTop: "10px",
-    padding: "6px 10px",
-    background: "red",
-    color: "white",
-    border: "none",
-    borderRadius: "5px"
-  }}
->
-  Delete
-</button>
+            onClick={() => handleDelete(travel.id)}
+            style={{
+              marginTop: "12px",
+              padding: "8px",
+              width: "100%",
+              backgroundColor: "#ff4444",
+              color: "white",
+              border: "none",
+              borderRadius: "6px"
+            }}
+          >
+            Delete
+          </button>
         </div>
       ))}
     </div>
