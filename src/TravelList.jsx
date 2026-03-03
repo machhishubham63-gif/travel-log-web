@@ -58,15 +58,17 @@ const handleDelete = async (id) => {
         <button
           onClick={() => handleDelete(travel.id)}
           style={{
-            marginTop: "12px",
-            padding: "8px",
-            width: "100%",
-            backgroundColor: "#ff4444",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer"
-          }}
+  marginTop: "12px",
+  padding: "8px",
+  width: "100%",
+  backgroundColor: "#ff4444",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  position: "relative",
+  zIndex: 2
+}}
         >
           Delete
         </button>
