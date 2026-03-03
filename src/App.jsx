@@ -5,9 +5,22 @@ import { onAuthStateChanged } from "firebase/auth";
 import Login from "./Login";
 
 function Dashboard() {
+import TravelForm from "./TravelForm";
+import TravelList from "./TravelList";
+import { signOut } from "firebase/auth";
+import { auth } from "./firebase";
+
+function Dashboard() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
   return (
-    <div style={{ color: "white", textAlign: "center", marginTop: "40px" }}>
-      <h1>Travel Log Dashboard</h1>
+    <div style={{ padding: "20px", color: "white" }}>
+      <h1>My Travel Log</h1>
+
+      <button onClick={() => signOut(auth)}>Logout</button>
+
+      <TravelForm refresh={() => setRefreshKey(old => old + 1)} />
+      <TravelList key={refreshKey} />
     </div>
   );
 }
