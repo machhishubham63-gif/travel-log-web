@@ -21,9 +21,9 @@ export default function TravelList({ user }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data()
+      const data = snapshot.docs.map((docItem) => ({
+        id: docItem.id,
+        ...docItem.data()
       }));
       setTravels(data);
     });
@@ -32,11 +32,35 @@ export default function TravelList({ user }) {
   }, [user]);
 
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "travels", id));
+    try {
+      await deleteDoc(doc(db, "travels", id));
+    } catch (error) {
+      alert("Delete failed: " + error.message);
+    }
   };
+
+  const totalExpense = travels.reduce(
+    (sum, item) => sum + (item.expense || 0),
+    0
+  );
 
   return (
     <div>
+      <div
+        style={{
+          background: "#2c2c2c",
+          padding: "15px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          textAlign: "center",
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "18px"
+        }}
+      >
+        Total Travel Expense: ₹{totalExpense}
+      </div>
+
       {travels.map((travel) => (
         <div
           key={travel.id}
@@ -49,8 +73,8 @@ export default function TravelList({ user }) {
           }}
         >
           <h3>{travel.location}</h3>
-          <p>{travel.date}</p>
-          <p>₹{travel.expense}</p>
+          <p>Date: {travel.date}</p>
+          <p>Expense: ₹{travel.expense}</p>
           <p>{travel.notes}</p>
 
           <button
