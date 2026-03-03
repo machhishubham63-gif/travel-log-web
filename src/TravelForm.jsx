@@ -11,14 +11,18 @@ export default function TravelForm({ user }) {
   const handleSubmit = async () => {
     if (!location || !date || !user) return;
 
-    await addDoc(collection(db, "travels"), {
-      userId: user.uid,
-      location,
-      date,
-      expense: Number(expense) || 0,
-      notes,
-      createdAt: new Date()
-    });
+    try {
+      await addDoc(collection(db, "travels"), {
+        userId: user.uid,
+        location,
+        date,
+        expense: Number(expense) || 0,
+        notes,
+        createdAt: new Date()
+      });
+    } catch (error) {
+      alert("Error saving: " + error.message);
+    }
 
     setLocation("");
     setDate("");
