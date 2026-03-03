@@ -17,7 +17,6 @@ export default function TravelForm({ refresh }) {
   date,
   expense: Number(expense) || 0,
   notes
-});
       notes,
       createdAt: new Date()
     });
