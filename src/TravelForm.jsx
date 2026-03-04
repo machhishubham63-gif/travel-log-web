@@ -33,12 +33,12 @@ export default function TravelForm({ user }) {
       date,
       officeTrip: {
         type: officeType,
-        name: officeType === "person" ? officeOption : undefined,
+        name: officeOption, // Safely storing the exact selection
         amount: Number(officeAmount) || 0,
       },
       returnTrip: {
         type: returnType,
-        name: returnType === "person" ? returnOption : undefined,
+        name: returnOption, // Safely storing the exact selection
         amount: Number(returnAmount) || 0,
       },
       totalAmount: (Number(officeAmount) || 0) + (Number(returnAmount) || 0),
