@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
-import { collection, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 
 export default function TravelList({ user }) {
-  const personAmounts = { "Person A": 100, "Person B": 120 };
-
   const [travels, setTravels] = useState([]);
-  const [editingTravel, setEditingTravel] = useState(null);
-  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     if (!user) return;
@@ -15,6 +11,9 @@ export default function TravelList({ user }) {
     const q = query(collection(db, "travels"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      
+      // Sort so the newest dates appear at the top
+      data.sort((a, b) => new Date(b.date) - new Date(a.date));
       setTravels(data);
     });
 
@@ -22,229 +21,79 @@ export default function TravelList({ user }) {
   }, [user]);
 
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "travels", id));
-  };
-
-  const openEdit = (travel) => {
-    setEditingTravel(travel);
-    setEditForm({
-      date: travel.date,
-      officeOption: travel.officeTrip.name, // Now directly referencing the saved name
-      officeAmount: travel.officeTrip.amount,
-      returnOption: travel.returnTrip.name, // Now directly referencing the saved name
-      returnAmount: travel.returnTrip.amount,
-      notes: travel.notes || "",
-    });
-  };
-
-  const handleEditSave = async () => {
-    if (!editingTravel) return;
-
-    const officeType = editForm.officeOption in personAmounts ? "person" : "bus/train";
-    const returnType = editForm.returnOption in personAmounts ? "person" : "bus/train";
-
-    await updateDoc(doc(db, "travels", editingTravel.id), {
-      date: editForm.date,
-      officeTrip: {
-        type: officeType,
-        name: editForm.officeOption, // Safely storing the exact selection
-        amount: Number(editForm.officeAmount) || 0,
-      },
-      returnTrip: {
-        type: returnType,
-        name: editForm.returnOption, // Safely storing the exact selection
-        amount: Number(editForm.returnAmount) || 0,
-      },
-      totalAmount: (Number(editForm.officeAmount) || 0) + (Number(editForm.returnAmount) || 0),
-      notes: editForm.notes,
-    });
-
-    setEditingTravel(null);
+    // Add a quick confirmation before deleting
+    if (window.confirm("Are you sure you want to delete this entry?")) {
+      await deleteDoc(doc(db, "travels", id));
+    }
   };
 
   return (
     <div>
-      {travels.map((travel) => (
-        <div
-          key={travel.id}
-          style={{
-            background: "#1e1e1e",
-            padding: "15px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-            color: "white",
-          }}
-        >
-          <h3>{travel.date}</h3>
-          <p>
-            Office → {travel.officeTrip.name} ({travel.officeTrip.type}) - ₹
-            {travel.officeTrip.amount}
-          </p>
-          <p>
-            Return → {travel.returnTrip.name} ({travel.returnTrip.type}) - ₹
-            {travel.returnTrip.amount}
-          </p>
-          <p>Total: ₹{travel.totalAmount}</p>
-          <p>Notes: {travel.notes}</p>
+      {travels.length === 0 && <p style={{ color: "#888" }}>No trips logged yet.</p>}
 
-          <div style={{ display: "flex", gap: "4%" }}>
-            <button
-              onClick={() => openEdit(travel)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                background: "#4caf50",
-                border: "none",
-                borderRadius: "6px",
-                color: "white",
-              }}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(travel.id)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                background: "#ff4444",
-                border: "none",
-                borderRadius: "6px",
-                color: "white",
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
+      {travels.map((travel) => {
+        // SAFEGUARD: Catch your old test data so the app doesn't crash again!
+        if (!travel.morning && !travel.evening && !travel.isNotGoing) {
+          return (
+            <div key={travel.id} style={{ background: "#555", padding: "15px", marginBottom: "12px", borderRadius: "10px", color: "white" }}>
+              <p>⚠️ <em>Old Test Data detected. Please delete this entry.</em></p>
+              <button onClick={() => handleDelete(travel.id)} style={{ padding: "8px 16px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white" }}>Delete Old Data</button>
+            </div>
+          );
+        }
 
-      {editingTravel && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
+        return (
           <div
+            key={travel.id}
             style={{
               background: "#1e1e1e",
-              padding: "20px",
+              padding: "15px",
+              marginBottom: "12px",
               borderRadius: "10px",
-              width: "90%",
-              maxWidth: "400px",
               color: "white",
+              borderLeft: travel.isNotGoing ? "5px solid #ef4444" : "5px solid #4caf50"
             }}
           >
-            <h3>Edit Travel Entry</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <h3 style={{ margin: 0 }}>{travel.date}</h3>
+              <h3 style={{ margin: 0, color: travel.isNotGoing ? "#ef4444" : "#4caf50" }}>
+                ₹{travel.totalAmount}
+              </h3>
+            </div>
 
-            <input
-              type="date"
-              value={editForm.date}
-              onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
-              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
-            />
+            {travel.isNotGoing ? (
+              <p style={{ color: "#ef4444", margin: "5px 0" }}>❌ Marked as Not Going</p>
+            ) : (
+              <div style={{ background: "#2d2d2d", padding: "10px", borderRadius: "6px" }}>
+                <p style={{ margin: "0 0 8px 0" }}>
+                  <strong style={{ color: "#60a5fa" }}>☀️ Morning:</strong> {travel.morning?.method} (₹{travel.morning?.amount})
+                  {travel.morning?.note && <span style={{ color: "#aaa", fontSize: "14px" }}> - Note: {travel.morning.note}</span>}
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: "#f472b6" }}>🌙 Evening:</strong> {travel.evening?.method} (₹{travel.evening?.amount})
+                  {travel.evening?.note && <span style={{ color: "#aaa", fontSize: "14px" }}> - Note: {travel.evening.note}</span>}
+                </p>
+              </div>
+            )}
 
-            {/* Office Trip */}
-            <label>Office Trip:</label>
-            <select
-              value={editForm.officeOption}
-              onChange={(e) => {
-                const val = e.target.value;
-                setEditForm({
-                  ...editForm,
-                  officeOption: val,
-                  officeAmount: val in personAmounts ? personAmounts[val] : editForm.officeAmount || 0,
-                });
-              }}
-              style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
-            >
-              <option>Person A</option>
-              <option>Person B</option>
-              <option>Bus</option>
-              <option>Train</option>
-            </select>
-
-            <input
-              type="number"
-              value={editForm.officeAmount}
-              onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) || 0 })}
-              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-            />
-
-            {/* Return Trip */}
-            <label>Return Trip:</label>
-            <select
-              value={editForm.returnOption}
-              onChange={(e) => {
-                const val = e.target.value;
-                setEditForm({
-                  ...editForm,
-                  returnOption: val,
-                  returnAmount: val in personAmounts ? personAmounts[val] : editForm.returnAmount || 0,
-                });
-              }}
-              style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
-            >
-              <option>Person A</option>
-              <option>Person B</option>
-              <option>Bus</option>
-              <option>Train</option>
-            </select>
-
-            <input
-              type="number"
-              value={editForm.returnAmount}
-              onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) || 0 })}
-              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-            />
-
-            {/* Notes */}
-            <input
-              placeholder="Notes"
-              value={editForm.notes}
-              onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
-            />
-
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
               <button
-                onClick={handleEditSave}
+                onClick={() => handleDelete(travel.id)}
                 style={{
-                  flex: 1,
-                  padding: "10px",
-                  background: "#4caf50",
-                  border: "none",
+                  padding: "6px 16px",
+                  background: "transparent",
+                  border: "1px solid #ef4444",
                   borderRadius: "6px",
-                  color: "white",
+                  color: "#ef4444",
+                  cursor: "pointer"
                 }}
               >
-                Save
-              </button>
-              <button
-                onClick={() => setEditingTravel(null)}
-                style={{
-                  flex: 1,
-                  padding: "10px",
-                  background: "#ff4444",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "white",
-                }}
-              >
-                Cancel
+                Delete
               </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }
