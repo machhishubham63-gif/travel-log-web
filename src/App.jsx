@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { auth } from "./firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth"; // Imported signOut
 import TravelForm from "./TravelForm";
 import TravelList from "./TravelList";
+import Login from "./Login"; // Imported your new Login component
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -17,23 +18,49 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
+  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
+
+  // If the user is NOT logged in, just show the Login screen
+  if (!user) {
+    return <Login />;
+  }
+
+  // If the user IS logged in, show the main App
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px" }}>
-      <h1>Travel Log</h1>
+    <div style={{ maxWidth: "600px", margin: "0 auto", padding: "20px", fontFamily: "sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <h1 style={{ margin: 0 }}>Travel Log</h1>
+        <button 
+          onClick={handleLogout}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#ef4444",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Logout
+        </button>
+      </div>
       
-      {user ? (
-        <>
-          <p>Logged in as: {user.email}</p>
-          {/* Pass the reactive user state to your components */}
-          <TravelForm user={user} />
-          <hr style={{ margin: "20px 0" }} />
-          <TravelList user={user} />
-        </>
-      ) : (
-        <p>Please log in to manage your travel logs. (Add your login form here!)</p>
-      )}
+      <p style={{ color: "#666", marginBottom: "20px" }}>Logged in as: <strong>{user.email}</strong></p>
+      
+      <TravelForm user={user} />
+      
+      <hr style={{ margin: "30px 0", border: "1px solid #eee" }} />
+      
+      <h2>Your Travel History</h2>
+      <TravelList user={user} />
     </div>
   );
 }
