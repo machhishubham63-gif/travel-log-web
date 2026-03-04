@@ -154,10 +154,6 @@ export default function App() {
         <NavButton 
           label="Persons" 
           icon="👥" 
-          
-        <NavButton 
-          label="Persons" 
-          icon="👥" 
           isActive={activeTab === "persons"} 
           onClick={() => setActiveTab("persons")} 
         />
