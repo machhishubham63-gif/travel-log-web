@@ -7,6 +7,7 @@ import Login from "./Login";
 import PersonsManager from "./PersonsManager";
 import MonthlyDashboard from "./MonthlyDashboard";
 import Settlements from "./Settlements";
+import YearlySummary from "./YearlySummary";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -53,6 +54,8 @@ export default function App() {
             <TravelList user={user} />
           </>
         );
+      case "yearly": // <--- ADD THIS CASE
+        return <YearlySummary user={user} />;
       case "persons":
         return <PersonsManager user={user} />;
       case "pay": // <--- ADD THIS CASE
@@ -126,6 +129,12 @@ export default function App() {
           icon="📊" 
           isActive={activeTab === "dashboard"} 
           onClick={() => setActiveTab("dashboard")} 
+        />
+        <NavButton 
+          label="Yearly" 
+          icon="📅" 
+          isActive={activeTab === "yearly"} 
+          onClick={() => setActiveTab("yearly")} 
         />
         <NavButton 
           label="Add" 
