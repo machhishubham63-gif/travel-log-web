@@ -8,8 +8,7 @@
     <meta name="theme-color" content="#000000" />
     <meta name="background-color" content="#000000" />
     
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/8292/8292080.png" />
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8292/8292080.png" />
 
     <title>Travel Log</title>
@@ -17,5 +16,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
   </body>
 </html>
