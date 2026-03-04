@@ -115,7 +115,8 @@ export default function MonthlyDashboard({ user, globalMonth, setGlobalMonth, us
         </div>
       </div>
 
-      <div style={{ display: "flex", justify-content: "space-between", backgroundColor: "var(--bg-card)", padding: "20px 24px", borderRadius: "32px", marginBottom: "24px", border: "1px solid var(--border-light)" }}>
+      {/* CORRECTED LINE HERE (justifyContent) */}
+      <div style={{ display: "flex", justifyContent: "space-between", backgroundColor: "var(--bg-card)", padding: "20px 24px", borderRadius: "32px", marginBottom: "24px", border: "1px solid var(--border-light)" }}>
         <span style={{color: "var(--text-main)", fontSize: "16px", fontWeight: "800"}}><strong style={{ color: "var(--accent-blue)" }}>☀️ AM:</strong> ₹{morningTotal}</span>
         <span style={{color: "var(--text-main)", fontSize: "16px", fontWeight: "800"}}><strong style={{ color: "var(--accent-purple)" }}>🌙 PM:</strong> ₹{eveningTotal}</span>
       </div>
