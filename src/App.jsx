@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { auth } from "./firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth"; // Imported signOut
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import TravelForm from "./TravelForm";
 import TravelList from "./TravelList";
-import Login from "./Login"; // Imported your new Login component
+import Login from "./Login";
+import PersonsManager from "./PersonsManager"; // <-- 1. Imported the new component
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -61,6 +62,16 @@ export default function App() {
       
       <h2>Your Travel History</h2>
       <TravelList user={user} />
+
+      {/* --- 2. Added the Persons Manager Section Here --- */}
+      <hr style={{ margin: "30px 0", border: "1px solid #eee" }} />
+      
+      <h2>Step 1: Setup Persons</h2>
+      <p style={{ color: "#666", marginBottom: "15px", fontSize: "14px" }}>
+        Add Prashant and Unnat here first, so we can use them in the new Travel Form.
+      </p>
+      <PersonsManager user={user} />
+      
     </div>
   );
 }
