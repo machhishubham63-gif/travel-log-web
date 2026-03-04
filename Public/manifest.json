@@ -1,6 +1,6 @@
 {
-  "name": "Travel & Settlement Log",
-  "short_name": "Travel Log",
+  "name": "Travel Log",
+  "short_name": "Travel",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -8,7 +8,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/8292/8292080.png",
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Car_icon.png/192px-Car_icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Car_icon.png/512px-Car_icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
