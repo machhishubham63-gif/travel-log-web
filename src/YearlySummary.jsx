@@ -7,23 +7,25 @@ export default function YearlySummary({ user }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [travels, setTravels] = useState([]);
 
-  // Fetch all travels for the selected year
+  // Fetch all travels for the user and filter by year in JavaScript
+  // This completely avoids the Firebase "Composite Index" error!
   useEffect(() => {
     if (!user) return;
-    
-    // Create start and end dates for the query (e.g., "2026-01-01" to "2026-12-31")
-    const startDate = `${selectedYear}-01-01`;
-    const endDate = `${selectedYear}-12-31`;
 
     const q = query(
       collection(db, "travels"),
-      where("userId", "==", user.uid),
-      where("date", ">=", startDate),
-      where("date", "<=", endDate)
+      where("userId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setTravels(snapshot.docs.map(d => d.data()));
+      const allData = snapshot.docs.map(d => d.data());
+      
+      // Filter out only the trips that match the selected year (e.g., starts with "2026")
+      const yearlyData = allData.filter(d => d.date && d.date.startsWith(selectedYear));
+      setTravels(yearlyData);
+      
+    }, (error) => {
+      console.error("Error fetching yearly data:", error);
     });
 
     return () => unsubscribe();
