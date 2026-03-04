@@ -48,7 +48,7 @@ export default function App() {
     setActiveTab(tabName);
   };
 
-  if (loading) return <div style={{ height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "#000", color: "#448aff", fontSize: "18px", fontWeight: "700" }}>Loading...</div>;
+  if (loading) return <div style={{ height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "var(--bg-main)", color: "var(--accent-blue)", fontSize: "18px", fontWeight: "800" }}>Loading...</div>;
   if (!user) return <Login />;
 
   const renderTabContent = () => {
@@ -56,7 +56,7 @@ export default function App() {
       case "dashboard": return <MonthlyDashboard user={user} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} userSettings={userSettings} />;
       case "add": return <TravelForm user={user} />;
       case "calendar": return <CalendarView user={user} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} navigateTo={navigateTo} />;
-      case "history": return <><h2 style={{ margin: "0 0 24px 0", color: "white", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px", paddingLeft: "8px" }}>History</h2><TravelList user={user} /></>;
+      case "history": return <><h2 style={{ margin: "0 0 24px 0", color: "var(--text-main)", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px", paddingLeft: "8px" }}>History</h2><TravelList user={user} /></>;
       case "yearly": return <YearlySummary user={user} navigateTo={navigateTo} />;
       case "pay": return <Settlements user={user} globalMonth={globalMonth} setGlobalMonth={setGlobalMonth} userSettings={userSettings} />;
       case "persons": return <PersonsManager user={user} />;
@@ -65,7 +65,6 @@ export default function App() {
     }
   };
 
-  // --- NATIVE SVG ICONS ---
   const icons = {
     dashboard: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
     add: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>,
@@ -77,35 +76,25 @@ export default function App() {
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", fontFamily: "system-ui, -apple-system, sans-serif", backgroundColor: "#000000", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ maxWidth: "600px", margin: "0 auto", fontFamily: "system-ui, -apple-system, sans-serif", backgroundColor: "var(--bg-main)", minHeight: "100vh", display: "flex", flexDirection: "column", color: "var(--text-main)", transition: "background-color 0.3s" }}>
       
-      {/* PREMIUM HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", backgroundColor: "rgba(0,0,0,0.8)", backdropFilter: "blur(10px)", position: "sticky", top: 0, zIndex: 100 }}>
-        <h1 style={{ margin: 0, color: "white", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>Travel Log</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", backgroundColor: "var(--bg-surface)", position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid var(--border-light)" }}>
+        <h1 style={{ margin: 0, color: "var(--text-main)", fontSize: "22px", fontWeight: "800", letterSpacing: "-0.5px" }}>Travel Log</h1>
         <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => setActiveTab("settings")} style={{ padding: "8px", backgroundColor: "#111111", color: activeTab === "settings" ? "#448aff" : "#888", border: "1px solid #222", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+          <button onClick={() => setActiveTab("settings")} style={{ padding: "8px", backgroundColor: "var(--bg-input)", color: activeTab === "settings" ? "var(--accent-blue)" : "var(--text-muted)", border: "1px solid var(--border-strong)", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {icons.settings}
           </button>
-          <button onClick={handleLogout} style={{ padding: "8px 16px", backgroundColor: "#ff525215", color: "#ff8a80", border: "1px solid #ff525230", borderRadius: "20px", fontSize: "14px", fontWeight: "700", cursor: "pointer" }}>
+          <button onClick={handleLogout} style={{ padding: "8px 16px", backgroundColor: "var(--accent-red-bg)", color: "var(--accent-red)", border: "1px solid var(--accent-red)", borderRadius: "20px", fontSize: "14px", fontWeight: "800", cursor: "pointer" }}>
             Logout
           </button>
         </div>
       </div>
       
-      {/* MAIN CONTENT AREA */}
       <div style={{ padding: "16px", paddingBottom: "110px", flex: 1 }}>
         {renderTabContent()}
       </div>
 
-      {/* MODERN SVG NAVIGATION BAR */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, width: "100%",
-        backgroundColor: "#0A0A0A", 
-        borderTop: "1px solid #1A1A1A",
-        display: "flex", justifyContent: "space-around",
-        padding: "10px 4px", paddingBottom: "calc(10px + env(safe-area-inset-bottom))",
-        zIndex: 1000
-      }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, width: "100%", backgroundColor: "var(--bg-card)", borderTop: "1px solid var(--border-light)", display: "flex", justifyContent: "space-around", padding: "10px 4px", paddingBottom: "calc(10px + env(safe-area-inset-bottom))", zIndex: 1000 }}>
         <NavButton label="Dash" icon={icons.dashboard} isActive={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
         <NavButton label="Add" icon={icons.add} isActive={activeTab === "add"} onClick={() => setActiveTab("add")} />
         <NavButton label="Cal" icon={icons.calendar} isActive={activeTab === "calendar"} onClick={() => setActiveTab("calendar")} />
@@ -118,24 +107,13 @@ export default function App() {
   );
 }
 
-// SLEEK INDICATOR PILL COMPONENT
 function NavButton({ label, icon, isActive, onClick }) {
   return (
-    <button 
-      onClick={onClick}
-      style={{
-        background: "none", border: "none", color: isActive ? "#448aff" : "#666666",
-        display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flex: 1, padding: 0
-      }}
-    >
-      <div style={{
-        backgroundColor: isActive ? "#448aff15" : "transparent",
-        padding: "6px 16px", borderRadius: "20px", marginBottom: "4px", transition: "all 0.2s ease",
-        display: "flex", alignItems: "center", justifyContent: "center"
-      }}>
+    <button onClick={onClick} style={{ background: "none", border: "none", color: isActive ? "var(--accent-blue)" : "var(--text-faded)", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flex: 1, padding: 0 }}>
+      <div style={{ backgroundColor: isActive ? "var(--accent-blue-bg)" : "transparent", padding: "6px 16px", borderRadius: "20px", marginBottom: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {icon}
       </div>
-      <span style={{ fontSize: "11px", fontWeight: isActive ? "800" : "600", letterSpacing: "0.2px", transition: "all 0.2s ease" }}>{label}</span>
+      <span style={{ fontSize: "11px", fontWeight: isActive ? "800" : "700" }}>{label}</span>
     </button>
   );
 }
