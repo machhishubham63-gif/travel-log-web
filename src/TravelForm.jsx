@@ -3,44 +3,38 @@ import { db } from "./firebase";
 import { collection, addDoc } from "firebase/firestore";
 
 export default function TravelForm({ user }) {
-  // Preset amounts for Person A and Person B
-  const personAmounts = {
-    "Person A": 100, // example fixed amount
-    "Person B": 120
-  };
+  const personAmounts = { "Person A": 100, "Person B": 120 };
 
   const [date, setDate] = useState("");
-  const [officeType, setOfficeType] = useState("person"); // "person" or "bus/train"
+  const [officeType, setOfficeType] = useState("person");
   const [officePerson, setOfficePerson] = useState("Person A");
-  const [officeTransport, setOfficeTransport] = useState("person");
-  const [officeAmount, setOfficeAmount] = useState(personAmounts[officePerson] || 0);
-
+  const [officeAmount, setOfficeAmount] = useState(personAmounts["Person A"]);
   const [returnType, setReturnType] = useState("person");
   const [returnPerson, setReturnPerson] = useState("Person A");
-  const [returnTransport, setReturnTransport] = useState("person");
-  const [returnAmount, setReturnAmount] = useState(personAmounts[returnPerson] || 0);
-
+  const [returnAmount, setReturnAmount] = useState(personAmounts["Person A"]);
   const [notes, setNotes] = useState("");
 
   const handleSubmit = async () => {
-    if (!date) return;
+    if (!date || !user) return;
 
-    const totalAmount = (officeAmount || 0) + (returnAmount || 0);
+    // Ensure amount is always a number
+    const officeAmt = Number(officeAmount) || 0;
+    const returnAmt = Number(returnAmount) || 0;
 
     await addDoc(collection(db, "travels"), {
       userId: user.uid,
       date,
       officeTrip: {
-        type: officeType === "person" ? "person" : "bus/train",
+        type: officeType,
         name: officeType === "person" ? officePerson : undefined,
-        amount: Number(officeAmount) || 0
+        amount: officeAmt
       },
       returnTrip: {
-        type: returnType === "person" ? "person" : "bus/train",
+        type: returnType,
         name: returnType === "person" ? returnPerson : undefined,
-        amount: Number(returnAmount) || 0
+        amount: returnAmt
       },
-      totalAmount,
+      totalAmount: officeAmt + returnAmt,
       notes,
       createdAt: new Date()
     });
@@ -58,12 +52,12 @@ export default function TravelForm({ user }) {
 
   const handleOfficePersonChange = (person) => {
     setOfficePerson(person);
-    setOfficeAmount(personAmounts[person] || 0);
+    if (officeType === "person") setOfficeAmount(personAmounts[person] || 0);
   };
 
   const handleReturnPersonChange = (person) => {
     setReturnPerson(person);
-    setReturnAmount(personAmounts[person] || 0);
+    if (returnType === "person") setReturnAmount(personAmounts[person] || 0);
   };
 
   return (
@@ -76,68 +70,64 @@ export default function TravelForm({ user }) {
       />
 
       {/* Office Trip */}
-      <div style={{ marginBottom: "8px" }}>
-        <label>Office Trip:</label>
+      <label>Office Trip:</label>
+      <select
+        value={officeType}
+        onChange={(e) => setOfficeType(e.target.value)}
+        style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+      >
+        <option value="person">Person</option>
+        <option value="bus/train">Bus/Train</option>
+      </select>
+
+      {officeType === "person" && (
         <select
-          value={officeType}
-          onChange={(e) => setOfficeType(e.target.value)}
-          style={{ width: "48%", marginRight: "4%", padding: "6px" }}
+          value={officePerson}
+          onChange={(e) => handleOfficePersonChange(e.target.value)}
+          style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
         >
-          <option value="person">Person</option>
-          <option value="bus/train">Bus/Train</option>
+          <option value="Person A">Person A</option>
+          <option value="Person B">Person B</option>
         </select>
+      )}
 
-        {officeType === "person" ? (
-          <select
-            value={officePerson}
-            onChange={(e) => handleOfficePersonChange(e.target.value)}
-            style={{ width: "48%", padding: "6px" }}
-          >
-            <option value="Person A">Person A</option>
-            <option value="Person B">Person B</option>
-          </select>
-        ) : null}
-
-        <input
-          type="number"
-          placeholder="Amount"
-          value={officeAmount}
-          onChange={(e) => setOfficeAmount(Number(e.target.value))}
-          style={{ width: "100%", padding: "6px", marginTop: "4px" }}
-        />
-      </div>
+      <input
+        type="number"
+        placeholder="Amount"
+        value={officeAmount}
+        onChange={(e) => setOfficeAmount(Number(e.target.value))}
+        style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+      />
 
       {/* Return Trip */}
-      <div style={{ marginBottom: "8px" }}>
-        <label>Return Trip:</label>
+      <label>Return Trip:</label>
+      <select
+        value={returnType}
+        onChange={(e) => setReturnType(e.target.value)}
+        style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+      >
+        <option value="person">Person</option>
+        <option value="bus/train">Bus/Train</option>
+      </select>
+
+      {returnType === "person" && (
         <select
-          value={returnType}
-          onChange={(e) => setReturnType(e.target.value)}
-          style={{ width: "48%", marginRight: "4%", padding: "6px" }}
+          value={returnPerson}
+          onChange={(e) => handleReturnPersonChange(e.target.value)}
+          style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
         >
-          <option value="person">Person</option>
-          <option value="bus/train">Bus/Train</option>
+          <option value="Person A">Person A</option>
+          <option value="Person B">Person B</option>
         </select>
+      )}
 
-        {returnType === "person" ? (
-          <select
-            value={returnPerson}
-            onChange={(e) => handleReturnPersonChange(e.target.value)}
-            style={{ width: "48%", padding: "6px" }}
-          >
-            <option value="Person A">Person A</option>
-            <option value="Person B">Person B</option>
-          </select>
-        ) : null}
-
-        <input
-          type="number"
-          placeholder="Amount"
-          value={returnAmount}
-          onChange={(e) => setReturnAmount(Number(e.target.value))}
-          style={{ width: "100%", padding: "6px", marginTop: "4px" }}
-        />
-      </div>
+      <input
+        type="number"
+        placeholder="Amount"
+        value={returnAmount}
+        onChange={(e) => setReturnAmount(Number(e.target.value))}
+        style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+      />
 
       {/* Notes */}
       <input
