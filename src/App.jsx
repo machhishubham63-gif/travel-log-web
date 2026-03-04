@@ -8,6 +8,7 @@ import PersonsManager from "./PersonsManager";
 import MonthlyDashboard from "./MonthlyDashboard";
 import Settlements from "./Settlements";
 import YearlySummary from "./YearlySummary";
+import CalendarView from "./CalendarView";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -47,6 +48,8 @@ export default function App() {
         return <MonthlyDashboard user={user} />;
       case "add":
         return <TravelForm user={user} />;
+      case "calendar": // <--- ADD THIS CASE
+        return <CalendarView user={user} />;
       case "history":
         return (
           <>
@@ -141,6 +144,12 @@ export default function App() {
           icon="➕" 
           isActive={activeTab === "add"} 
           onClick={() => setActiveTab("add")} 
+        />
+        <NavButton 
+          label="Calendar" 
+          icon="📅" 
+          isActive={activeTab === "calendar"} 
+          onClick={() => setActiveTab("calendar")} 
         />
         <NavButton 
           label="History" 
