@@ -15,18 +15,18 @@ export default function TravelForm({ user }) {
   const handleOptionChange = (type, value) => {
     if (type === "office") {
       setOfficeOption(value);
-      setOfficeAmount(personAmounts[value] || 0);
+      setOfficeAmount(value in personAmounts ? personAmounts[value] : 0);
     } else {
       setReturnOption(value);
-      setReturnAmount(personAmounts[value] || 0);
+      setReturnAmount(value in personAmounts ? personAmounts[value] : 0);
     }
   };
 
   const handleSubmit = async () => {
     if (!date || !user) return;
 
-    const officeType = officeOption === "Person A" || officeOption === "Person B" ? "person" : "bus/train";
-    const returnType = returnOption === "Person A" || returnOption === "Person B" ? "person" : "bus/train";
+    const officeType = officeOption in personAmounts ? "person" : "bus/train";
+    const returnType = returnOption in personAmounts ? "person" : "bus/train";
 
     await addDoc(collection(db, "travels"), {
       userId: user.uid,
@@ -34,19 +34,19 @@ export default function TravelForm({ user }) {
       officeTrip: {
         type: officeType,
         name: officeType === "person" ? officeOption : undefined,
-        amount: Number(officeAmount) || 0
+        amount: Number(officeAmount) || 0,
       },
       returnTrip: {
         type: returnType,
         name: returnType === "person" ? returnOption : undefined,
-        amount: Number(returnAmount) || 0
+        amount: Number(returnAmount) || 0,
       },
       totalAmount: (Number(officeAmount) || 0) + (Number(returnAmount) || 0),
       notes,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
-    // Reset
+    // Reset form
     setDate("");
     setOfficeOption("Person A");
     setOfficeAmount(personAmounts["Person A"]);
@@ -77,15 +77,13 @@ export default function TravelForm({ user }) {
         <option>Train</option>
       </select>
 
-      {officeOption === "Bus" || officeOption === "Train" ? (
-        <input
-          type="number"
-          placeholder="Amount"
-          value={officeAmount}
-          onChange={(e) => setOfficeAmount(Number(e.target.value) || 0)}
-          style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-        />
-      ) : null}
+      <input
+        type="number"
+        placeholder="Amount"
+        value={officeAmount}
+        onChange={(e) => setOfficeAmount(Number(e.target.value) || 0)}
+        style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+      />
 
       {/* Return Trip */}
       <label>Return Trip:</label>
@@ -100,15 +98,13 @@ export default function TravelForm({ user }) {
         <option>Train</option>
       </select>
 
-      {returnOption === "Bus" || returnOption === "Train" ? (
-        <input
-          type="number"
-          placeholder="Amount"
-          value={returnAmount}
-          onChange={(e) => setReturnAmount(Number(e.target.value) || 0)}
-          style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-        />
-      ) : null}
+      <input
+        type="number"
+        placeholder="Amount"
+        value={returnAmount}
+        onChange={(e) => setReturnAmount(Number(e.target.value) || 0)}
+        style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+      />
 
       {/* Notes */}
       <input
