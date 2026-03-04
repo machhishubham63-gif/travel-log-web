@@ -37,7 +37,6 @@ export default function MonthlyDashboard({ user, globalMonth, setGlobalMonth, us
     try { await setDoc(doc(db, "months", `${user.uid}_${currentMonth}`), { userId: user.uid, monthKey: currentMonth, isFinalized: true, finalizedAt: new Date() }); } catch (error) { alert("Failed to finalize month."); }
   };
 
-  // NEW FEATURE: Quick Monthly CSV Download
   const handleMonthlyExport = () => {
     if (travels.length === 0) return alert("No data to export for this month.");
     let csvContent = "data:text/csv;charset=utf-8,Date,Status,Morning Method,Morning Amount,Evening Method,Evening Amount,Total Amount\n";
@@ -64,12 +63,37 @@ export default function MonthlyDashboard({ user, globalMonth, setGlobalMonth, us
     }
   });
 
+  // --- NEW: SMART REMINDER LOGIC ---
+  const todayObj = new Date();
+  const year = todayObj.getFullYear();
+  const month = String(todayObj.getMonth() + 1).padStart(2, '0');
+  const day = String(todayObj.getDate()).padStart(2, '0');
+  const todayFormatted = `${year}-${month}-${day}`;
+  
+  const currentHour = todayObj.getHours();
+  const hasLoggedToday = travels.some(t => t.date === todayFormatted);
+  const isViewingCurrentMonth = currentMonth === todayFormatted.substring(0, 7);
+
+  // Trigger banner if: viewing this month, it's >= 8:00 PM (20), and no trip is logged today
+  const showReminder = isViewingCurrentMonth && currentHour >= 20 && !hasLoggedToday;
+
   return (
     <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", padding: "0 8px" }}>
         <h2 style={{ margin: 0, color: "var(--text-main)", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>Dashboard</h2>
         <input type="month" value={currentMonth} onChange={handleMonthChange} style={{ padding: "10px 16px", borderRadius: "20px", border: "1px solid var(--border-strong)", background: "var(--bg-surface)", color: "var(--text-main)", fontSize: "16px", fontWeight: "600" }} />
       </div>
+
+      {/* NEW FEATURE: THE DYNAMIC BANNER */}
+      {showReminder && (
+        <div style={{ backgroundColor: "var(--accent-red-bg)", padding: "16px 20px", borderRadius: "24px", marginBottom: "24px", border: "1px solid var(--accent-red)", display: "flex", alignItems: "center", gap: "16px" }}>
+          <span style={{ fontSize: "32px" }}>⏰</span>
+          <div>
+            <h4 style={{ margin: 0, color: "var(--accent-red)", fontSize: "16px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.5px" }}>Action Required</h4>
+            <p style={{ margin: "4px 0 0 0", color: "var(--text-main)", fontSize: "14px", fontWeight: "600", lineHeight: "1.4" }}>It's past 8:00 PM. Don't forget to log your travel for today!</p>
+          </div>
+        </div>
+      )}
 
       <div style={{ marginBottom: "24px", padding: "0 4px", display: "flex", gap: "10px" }}>
         {isFinalized ? (
@@ -91,7 +115,7 @@ export default function MonthlyDashboard({ user, globalMonth, setGlobalMonth, us
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", backgroundColor: "var(--bg-card)", padding: "20px 24px", borderRadius: "32px", marginBottom: "24px", border: "1px solid var(--border-light)" }}>
+      <div style={{ display: "flex", justify-content: "space-between", backgroundColor: "var(--bg-card)", padding: "20px 24px", borderRadius: "32px", marginBottom: "24px", border: "1px solid var(--border-light)" }}>
         <span style={{color: "var(--text-main)", fontSize: "16px", fontWeight: "800"}}><strong style={{ color: "var(--accent-blue)" }}>☀️ AM:</strong> ₹{morningTotal}</span>
         <span style={{color: "var(--text-main)", fontSize: "16px", fontWeight: "800"}}><strong style={{ color: "var(--accent-purple)" }}>🌙 PM:</strong> ₹{eveningTotal}</span>
       </div>
