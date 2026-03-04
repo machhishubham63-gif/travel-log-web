@@ -11,6 +11,8 @@ import {
 } from "firebase/firestore";
 
 export default function TravelList({ user }) {
+  const personAmounts = { "Person A": 100, "Person B": 120 };
+
   const [travels, setTravels] = useState([]);
   const [editingTravel, setEditingTravel] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -35,11 +37,9 @@ export default function TravelList({ user }) {
     setEditingTravel(travel);
     setEditForm({
       date: travel.date,
-      officeType: travel.officeTrip.type,
-      officePerson: travel.officeTrip.name || "Person A",
+      officeOption: travel.officeTrip.name || travel.officeTrip.type,
       officeAmount: travel.officeTrip.amount || 0,
-      returnType: travel.returnTrip.type,
-      returnPerson: travel.returnTrip.name || "Person A",
+      returnOption: travel.returnTrip.name || travel.returnTrip.type,
       returnAmount: travel.returnTrip.amount || 0,
       notes: travel.notes || ""
     });
@@ -48,22 +48,28 @@ export default function TravelList({ user }) {
   const handleEditSave = async () => {
     if (!editingTravel) return;
 
-    const officeAmt = Number(editForm.officeAmount) || 0;
-    const returnAmt = Number(editForm.returnAmount) || 0;
+    const officeType =
+      editForm.officeOption === "Person A" || editForm.officeOption === "Person B"
+        ? "person"
+        : "bus/train";
+    const returnType =
+      editForm.returnOption === "Person A" || editForm.returnOption === "Person B"
+        ? "person"
+        : "bus/train";
 
     await updateDoc(doc(db, "travels", editingTravel.id), {
       date: editForm.date,
       officeTrip: {
-        type: editForm.officeType,
-        name: editForm.officeType === "person" ? editForm.officePerson : undefined,
-        amount: officeAmt
+        type: officeType,
+        name: officeType === "person" ? editForm.officeOption : undefined,
+        amount: Number(editForm.officeAmount) || 0
       },
       returnTrip: {
-        type: editForm.returnType,
-        name: editForm.returnType === "person" ? editForm.returnPerson : undefined,
-        amount: returnAmt
+        type: returnType,
+        name: returnType === "person" ? editForm.returnOption : undefined,
+        amount: Number(editForm.returnAmount) || 0
       },
-      totalAmount: officeAmt + returnAmt,
+      totalAmount: (Number(editForm.officeAmount) || 0) + (Number(editForm.returnAmount) || 0),
       notes: editForm.notes
     });
 
@@ -72,63 +78,60 @@ export default function TravelList({ user }) {
 
   return (
     <div>
-      {travels
-        .sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis())
-        .map((travel) => (
-          <div
-            key={travel.id}
-            style={{
-              background: "#1e1e1e",
-              padding: "15px",
-              marginBottom: "12px",
-              borderRadius: "10px",
-              color: "white"
-            }}
-          >
-            <h3>{travel.date}</h3>
-            <p>
-              Office → {travel.officeTrip.name || travel.officeTrip.type} ({travel.officeTrip.type}) - ₹
-              {travel.officeTrip.amount}
-            </p>
-            <p>
-              Return → {travel.returnTrip.name || travel.returnTrip.type} ({travel.returnTrip.type}) - ₹
-              {travel.returnTrip.amount}
-            </p>
-            <p>Total: ₹{travel.totalAmount}</p>
-            <p>Notes: {travel.notes}</p>
+      {travels.map((travel) => (
+        <div
+          key={travel.id}
+          style={{
+            background: "#1e1e1e",
+            padding: "15px",
+            marginBottom: "12px",
+            borderRadius: "10px",
+            color: "white"
+          }}
+        >
+          <h3>{travel.date}</h3>
+          <p>
+            Office → {travel.officeTrip.name || travel.officeTrip.type} ({travel.officeTrip.type}) - ₹
+            {travel.officeTrip.amount}
+          </p>
+          <p>
+            Return → {travel.returnTrip.name || travel.returnTrip.type} ({travel.returnTrip.type}) - ₹
+            {travel.returnTrip.amount}
+          </p>
+          <p>Total: ₹{travel.totalAmount}</p>
+          <p>Notes: {travel.notes}</p>
 
-            <div style={{ display: "flex", gap: "4%" }}>
-              <button
-                onClick={() => openEdit(travel)}
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  background: "#4caf50",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "white"
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(travel.id)}
-                style={{
-                  flex: 1,
-                  padding: "8px",
-                  background: "#ff4444",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "white"
-                }}
-              >
-                Delete
-              </button>
-            </div>
+          <div style={{ display: "flex", gap: "4%" }}>
+            <button
+              onClick={() => openEdit(travel)}
+              style={{
+                flex: 1,
+                padding: "8px",
+                background: "#4caf50",
+                border: "none",
+                borderRadius: "6px",
+                color: "white"
+              }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(travel.id)}
+              style={{
+                flex: 1,
+                padding: "8px",
+                background: "#ff4444",
+                border: "none",
+                borderRadius: "6px",
+                color: "white"
+              }}
+            >
+              Delete
+            </button>
           </div>
-        ))}
+        </div>
+      ))}
 
-      {/* Edit Modal */}
       {editingTravel && (
         <div
           style={{
@@ -156,7 +159,6 @@ export default function TravelList({ user }) {
           >
             <h3>Edit Travel Entry</h3>
 
-            {/* Date */}
             <input
               type="date"
               value={editForm.date}
@@ -167,62 +169,62 @@ export default function TravelList({ user }) {
             {/* Office Trip */}
             <label>Office Trip:</label>
             <select
-              value={editForm.officeType}
-              onChange={(e) => setEditForm({ ...editForm, officeType: e.target.value })}
+              value={editForm.officeOption}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEditForm({ ...editForm, officeOption: val });
+                setEditForm((prev) => ({
+                  ...prev,
+                  officeAmount:
+                    val === "Person A" || val === "Person B" ? personAmounts[val] : prev.officeAmount || 0
+                }));
+              }}
               style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
             >
-              <option value="person">Person</option>
-              <option value="bus/train">Bus/Train</option>
+              <option>Person A</option>
+              <option>Person B</option>
+              <option>Bus</option>
+              <option>Train</option>
             </select>
 
-            {editForm.officeType === "person" && (
-              <select
-                value={editForm.officePerson}
-                onChange={(e) => setEditForm({ ...editForm, officePerson: e.target.value })}
-                style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
-              >
-                <option value="Person A">Person A</option>
-                <option value="Person B">Person B</option>
-              </select>
+            {(editForm.officeOption === "Bus" || editForm.officeOption === "Train") && (
+              <input
+                type="number"
+                value={editForm.officeAmount}
+                onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) || 0 })}
+                style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+              />
             )}
-
-            <input
-              type="number"
-              placeholder="Amount"
-              value={editForm.officeAmount}
-              onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) })}
-              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-            />
 
             {/* Return Trip */}
             <label>Return Trip:</label>
             <select
-              value={editForm.returnType}
-              onChange={(e) => setEditForm({ ...editForm, returnType: e.target.value })}
+              value={editForm.returnOption}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEditForm({ ...editForm, returnOption: val });
+                setEditForm((prev) => ({
+                  ...prev,
+                  returnAmount:
+                    val === "Person A" || val === "Person B" ? personAmounts[val] : prev.returnAmount || 0
+                }));
+              }}
               style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
             >
-              <option value="person">Person</option>
-              <option value="bus/train">Bus/Train</option>
+              <option>Person A</option>
+              <option>Person B</option>
+              <option>Bus</option>
+              <option>Train</option>
             </select>
 
-            {editForm.returnType === "person" && (
-              <select
-                value={editForm.returnPerson}
-                onChange={(e) => setEditForm({ ...editForm, returnPerson: e.target.value })}
-                style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
-              >
-                <option value="Person A">Person A</option>
-                <option value="Person B">Person B</option>
-              </select>
+            {(editForm.returnOption === "Bus" || editForm.returnOption === "Train") && (
+              <input
+                type="number"
+                value={editForm.returnAmount}
+                onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) || 0 })}
+                style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+              />
             )}
-
-            <input
-              type="number"
-              placeholder="Amount"
-              value={editForm.returnAmount}
-              onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) })}
-              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-            />
 
             {/* Notes */}
             <input
