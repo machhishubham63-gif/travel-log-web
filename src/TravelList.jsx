@@ -81,57 +81,62 @@ export default function TravelList({ user }) {
 
   return (
     <div>
-      {travels.map((travel) => (
-        <div
-          key={travel.id}
-          style={{
-            background: "#1e1e1e",
-            padding: "15px",
-            marginBottom: "12px",
-            borderRadius: "10px",
-            color: "white"
-          }}
-        >
-          <h3>{travel.date}</h3>
-          <p>
-            Office → {travel.officeTrip.name || "Bus/Train"} ({travel.officeTrip.type}) - ₹{travel.officeTrip.amount}
-          </p>
-          <p>
-            Return → {travel.returnTrip.name || "Bus/Train"} ({travel.returnTrip.type}) - ₹{travel.returnTrip.amount}
-          </p>
-          <p>Total: ₹{travel.totalAmount}</p>
-          <p>Notes: {travel.notes}</p>
+      {/* Travel Entries */}
+      {travels
+        .sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis())
+        .map((travel) => (
+          <div
+            key={travel.id}
+            style={{
+              background: "#1e1e1e",
+              padding: "15px",
+              marginBottom: "12px",
+              borderRadius: "10px",
+              color: "white"
+            }}
+          >
+            <h3>{travel.date}</h3>
+            <p>
+              Office → {travel.officeTrip.name || travel.officeTrip.type} ({travel.officeTrip.type}) - ₹
+              {travel.officeTrip.amount}
+            </p>
+            <p>
+              Return → {travel.returnTrip.name || travel.returnTrip.type} ({travel.returnTrip.type}) - ₹
+              {travel.returnTrip.amount}
+            </p>
+            <p>Total: ₹{travel.totalAmount}</p>
+            <p>Notes: {travel.notes}</p>
 
-          <div style={{ display: "flex", gap: "4%" }}>
-            <button
-              onClick={() => openEdit(travel)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                background: "#4caf50",
-                border: "none",
-                borderRadius: "6px",
-                color: "white"
-              }}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(travel.id)}
-              style={{
-                flex: 1,
-                padding: "8px",
-                background: "#ff4444",
-                border: "none",
-                borderRadius: "6px",
-                color: "white"
-              }}
-            >
-              Delete
-            </button>
+            <div style={{ display: "flex", gap: "4%" }}>
+              <button
+                onClick={() => openEdit(travel)}
+                style={{
+                  flex: 1,
+                  padding: "8px",
+                  background: "#4caf50",
+                  border: "none",
+                  borderRadius: "6px",
+                  color: "white"
+                }}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(travel.id)}
+                style={{
+                  flex: 1,
+                  padding: "8px",
+                  background: "#ff4444",
+                  border: "none",
+                  borderRadius: "6px",
+                  color: "white"
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
       {/* Edit Modal */}
       {editingTravel && (
