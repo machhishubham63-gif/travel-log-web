@@ -29,9 +29,9 @@ export default function TravelList({ user }) {
     setEditingTravel(travel);
     setEditForm({
       date: travel.date,
-      officeOption: travel.officeTrip.name || travel.officeTrip.type,
+      officeOption: travel.officeTrip.name, // Now directly referencing the saved name
       officeAmount: travel.officeTrip.amount,
-      returnOption: travel.returnTrip.name || travel.returnTrip.type,
+      returnOption: travel.returnTrip.name, // Now directly referencing the saved name
       returnAmount: travel.returnTrip.amount,
       notes: travel.notes || "",
     });
@@ -47,12 +47,12 @@ export default function TravelList({ user }) {
       date: editForm.date,
       officeTrip: {
         type: officeType,
-        name: officeType === "person" ? editForm.officeOption : undefined,
+        name: editForm.officeOption, // Safely storing the exact selection
         amount: Number(editForm.officeAmount) || 0,
       },
       returnTrip: {
         type: returnType,
-        name: returnType === "person" ? editForm.returnOption : undefined,
+        name: editForm.returnOption, // Safely storing the exact selection
         amount: Number(editForm.returnAmount) || 0,
       },
       totalAmount: (Number(editForm.officeAmount) || 0) + (Number(editForm.returnAmount) || 0),
@@ -77,11 +77,11 @@ export default function TravelList({ user }) {
         >
           <h3>{travel.date}</h3>
           <p>
-            Office → {travel.officeTrip.name || travel.officeTrip.type} ({travel.officeTrip.type}) - ₹
+            Office → {travel.officeTrip.name} ({travel.officeTrip.type}) - ₹
             {travel.officeTrip.amount}
           </p>
           <p>
-            Return → {travel.returnTrip.name || travel.returnTrip.type} ({travel.returnTrip.type}) - ₹
+            Return → {travel.returnTrip.name} ({travel.returnTrip.type}) - ₹
             {travel.returnTrip.amount}
           </p>
           <p>Total: ₹{travel.totalAmount}</p>
