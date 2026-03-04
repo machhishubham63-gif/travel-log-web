@@ -22,7 +22,8 @@ export default function PersonsManager({ user }) {
   }, [user]);
 
   // Add a new person to Firestore
-    const handleAddPerson = async (e) => {
+  // ---> THE FIX IS RIGHT HERE: added "async" before (e) <---
+  const handleAddPerson = async (e) => {
     e.preventDefault();
     if (!name || !defaultAmount) {
       alert("Please enter both a name and an amount.");
@@ -38,7 +39,7 @@ export default function PersonsManager({ user }) {
         userId: user.uid,
         name: name,
         defaultAmount: Number(defaultAmount),
-        isStarred: isStarred, 
+        isStarred: isStarred, // True = Settlement enabled
         createdAtDate: formattedDate,
         createdAtTimestamp: new Date(),
       });
@@ -47,30 +48,10 @@ export default function PersonsManager({ user }) {
       setName("");
       setDefaultAmount("");
       setIsStarred(false);
-      
     } catch (error) {
       console.error("Error adding person: ", error);
       alert("Failed to add person. Check your Firebase rules!");
     }
-  };
-
-    // Generate Indian Date Format (DD/MM/YYYY)
-    const today = new Date();
-    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-
-    await addDoc(collection(db, "persons"), {
-      userId: user.uid,
-      name: name,
-      defaultAmount: Number(defaultAmount),
-      isStarred: isStarred, // True = Settlement enabled
-      createdAtDate: formattedDate,
-      createdAtTimestamp: new Date(),
-    });
-
-    // Reset form fields
-    setName("");
-    setDefaultAmount("");
-    setIsStarred(false);
   };
 
   // Toggle the settlement star tracking
@@ -82,7 +63,6 @@ export default function PersonsManager({ user }) {
 
   // Delete a person
   const handleDelete = async (id) => {
-    // In the future, we might want to prevent deletion if they have pending settlements
     await deleteDoc(doc(db, "persons", id));
   };
 
