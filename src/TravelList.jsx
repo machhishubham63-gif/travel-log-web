@@ -13,18 +13,8 @@ import {
 export default function TravelList({ user }) {
   const [travels, setTravels] = useState([]);
   const [editingTravel, setEditingTravel] = useState(null);
-  const [editForm, setEditForm] = useState({
-    date: "",
-    officeType: "person",
-    officePerson: "Person A",
-    officeAmount: 0,
-    returnType: "person",
-    returnPerson: "Person A",
-    returnAmount: 0,
-    notes: ""
-  });
+  const [editForm, setEditForm] = useState({});
 
-  // Fetch travels
   useEffect(() => {
     if (!user) return;
 
@@ -58,21 +48,22 @@ export default function TravelList({ user }) {
   const handleEditSave = async () => {
     if (!editingTravel) return;
 
-    const totalAmount = (editForm.officeAmount || 0) + (editForm.returnAmount || 0);
+    const officeAmt = Number(editForm.officeAmount) || 0;
+    const returnAmt = Number(editForm.returnAmount) || 0;
 
     await updateDoc(doc(db, "travels", editingTravel.id), {
       date: editForm.date,
       officeTrip: {
         type: editForm.officeType,
         name: editForm.officeType === "person" ? editForm.officePerson : undefined,
-        amount: Number(editForm.officeAmount) || 0
+        amount: officeAmt
       },
       returnTrip: {
         type: editForm.returnType,
         name: editForm.returnType === "person" ? editForm.returnPerson : undefined,
-        amount: Number(editForm.returnAmount) || 0
+        amount: returnAmt
       },
-      totalAmount,
+      totalAmount: officeAmt + returnAmt,
       notes: editForm.notes
     });
 
@@ -81,7 +72,6 @@ export default function TravelList({ user }) {
 
   return (
     <div>
-      {/* Travel Entries */}
       {travels
         .sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis())
         .map((travel) => (
