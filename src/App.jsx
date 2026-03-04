@@ -6,6 +6,7 @@ import TravelList from "./TravelList";
 import Login from "./Login";
 import PersonsManager from "./PersonsManager";
 import MonthlyDashboard from "./MonthlyDashboard";
+import Settlements from "./Settlements";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -54,8 +55,9 @@ export default function App() {
         );
       case "persons":
         return <PersonsManager user={user} />;
+      case "pay": // <--- ADD THIS CASE
+        return <Settlements user={user} />;
       default:
-        return <MonthlyDashboard user={user} />;
     }
   };
 
