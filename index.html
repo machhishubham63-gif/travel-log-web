@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json?v=2" />
     <meta name="theme-color" content="#000000" />
     <meta name="background-color" content="#000000" />
     
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/8292/8292080.png" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/8292/8292080.png" />
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Car_icon.png/192px-Car_icon.png" />
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Car_icon.png/192px-Car_icon.png" />
 
     <title>Travel Log</title>
   </head>
@@ -20,7 +20,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
+          navigator.serviceWorker.register('/sw.js?v=2');
         });
       }
     </script>
