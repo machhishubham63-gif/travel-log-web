@@ -6,9 +6,10 @@ export default function Settings({ user }) {
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pin, setPin] = useState("");
   const [status, setStatus] = useState("");
-  
-  // NEW: State to hold the PWA install prompt
   const [installPrompt, setInstallPrompt] = useState(null);
+  
+  // NEW: Theme State
+  const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'dark');
 
   useEffect(() => {
     if (!user) return;
@@ -22,13 +23,11 @@ export default function Settings({ user }) {
     fetchSettings();
   }, [user]);
 
-  // NEW: Listen for the browser's "Ready to Install" signal
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault(); // Stop Chrome from showing the default mini-infobar
-      setInstallPrompt(e); // Save the event so we can trigger it with our button
+      e.preventDefault();
+      setInstallPrompt(e);
     };
-    
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
@@ -49,69 +48,72 @@ export default function Settings({ user }) {
     }
   };
 
-  // NEW: Function to trigger the actual installation popup
   const handleInstallClick = async () => {
     if (!installPrompt) return;
-    installPrompt.prompt(); // Show the native browser install popup
+    installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setInstallPrompt(null); // Hide the button if they installed it
-    }
+    if (outcome === 'accepted') setInstallPrompt(null);
+  };
+
+  // NEW: Theme Toggle Function
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('app-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    // Update the Android status bar color to match
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', newTheme === 'light' ? '#f3f4f6' : '#000000');
   };
 
   return (
-    <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif", color: "white" }}>
+    <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif", color: "var(--text-main)" }}>
       <h2 style={{ margin: "0 0 24px 0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px", paddingLeft: "8px" }}>Settings</h2>
 
-      {/* NEW: Dynamic Install Banner */}
+      {/* THEME TOGGLE */}
+      <div style={{ backgroundColor: "var(--bg-card)", padding: "24px", borderRadius: "32px", border: "1px solid var(--border-light)", marginBottom: "24px" }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "var(--accent-blue)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "800" }}>Appearance</h3>
+        
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-surface)", padding: "8px", borderRadius: "24px", border: "1px solid var(--border-light)" }}>
+          <button onClick={() => theme !== 'light' && toggleTheme()} style={{ flex: 1, padding: "12px", borderRadius: "16px", border: "none", backgroundColor: theme === 'light' ? "var(--bg-card)" : "transparent", color: theme === 'light' ? "var(--accent-blue)" : "var(--text-muted)", fontWeight: "800", fontSize: "15px", cursor: "pointer", transition: "all 0.2s", boxShadow: theme === 'light' ? "0 4px 10px rgba(0,0,0,0.05)" : "none" }}>
+            ☀️ Light
+          </button>
+          <button onClick={() => theme !== 'dark' && toggleTheme()} style={{ flex: 1, padding: "12px", borderRadius: "16px", border: "none", backgroundColor: theme === 'dark' ? "var(--bg-input)" : "transparent", color: theme === 'dark' ? "var(--accent-blue)" : "var(--text-muted)", fontWeight: "800", fontSize: "15px", cursor: "pointer", transition: "all 0.2s", boxShadow: theme === 'dark' ? "0 4px 10px rgba(0,0,0,0.2)" : "none" }}>
+            🌙 Dark
+          </button>
+        </div>
+      </div>
+
       {installPrompt && (
-        <div style={{ backgroundColor: "#448aff15", padding: "20px", borderRadius: "32px", marginBottom: "24px", border: "1px solid #448aff50", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+        <div style={{ backgroundColor: "var(--accent-blue-bg)", padding: "20px", borderRadius: "32px", marginBottom: "24px", border: "1px solid var(--accent-blue)", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
           <span style={{ fontSize: "40px", marginBottom: "12px" }}>📲</span>
-          <h3 style={{ margin: "0 0 8px 0", color: "#448aff", fontSize: "18px", fontWeight: "800" }}>Install Travel Log</h3>
-          <p style={{ margin: "0 0 16px 0", color: "#aaa", fontSize: "14px", fontWeight: "500" }}>Install this app to your home screen for full-screen offline access.</p>
-          <button 
-            onClick={handleInstallClick} 
-            style={{ width: "100%", padding: "16px", backgroundColor: "#448aff", color: "white", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "800", cursor: "pointer", boxShadow: "0 4px 15px rgba(68, 138, 255, 0.3)" }}
-          >
+          <h3 style={{ margin: "0 0 8px 0", color: "var(--accent-blue)", fontSize: "18px", fontWeight: "800" }}>Install Travel Log</h3>
+          <p style={{ margin: "0 0 16px 0", color: "var(--text-muted)", fontSize: "14px", fontWeight: "500" }}>Install this app to your home screen for full-screen offline access.</p>
+          <button onClick={handleInstallClick} style={{ width: "100%", padding: "16px", backgroundColor: "var(--accent-blue)", color: "#fff", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "800", cursor: "pointer" }}>
             Install App Now
           </button>
         </div>
       )}
 
-      <div style={{ backgroundColor: "#111111", padding: "24px", borderRadius: "32px", border: "1px solid #222" }}>
-        <h3 style={{ marginTop: 0, fontSize: "16px", color: "#69f0ae", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "800", marginBottom: "16px" }}>App Lock (PIN)</h3>
-        <p style={{ fontSize: "14px", color: "#888", marginBottom: "24px", fontWeight: "600", lineHeight: "1.5" }}>
+      <div style={{ backgroundColor: "var(--bg-card)", padding: "24px", borderRadius: "32px", border: "1px solid var(--border-light)" }}>
+        <h3 style={{ marginTop: 0, fontSize: "16px", color: "var(--accent-green)", textTransform: "uppercase", letterSpacing: "1px", fontWeight: "800", marginBottom: "16px" }}>App Lock (PIN)</h3>
+        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px", fontWeight: "600", lineHeight: "1.5" }}>
           Require a 4-digit PIN to finalize months and undo payments.
         </p>
 
-        <label style={{ display: "flex", alignItems: "center", marginBottom: "24px", fontSize: "16px", cursor: "pointer", backgroundColor: "#1A1A1A", padding: "16px", borderRadius: "20px", border: "1px solid #333", fontWeight: "700" }}>
-          <input
-            type="checkbox"
-            checked={pinEnabled}
-            onChange={(e) => setPinEnabled(e.target.checked)}
-            style={{ marginRight: "16px", width: "22px", height: "22px", accentColor: "#69f0ae" }}
-          />
+        <label style={{ display: "flex", alignItems: "center", marginBottom: "24px", fontSize: "16px", cursor: "pointer", backgroundColor: "var(--bg-surface)", padding: "16px", borderRadius: "20px", border: "1px solid var(--border-strong)", fontWeight: "700" }}>
+          <input type="checkbox" checked={pinEnabled} onChange={(e) => setPinEnabled(e.target.checked)} style={{ marginRight: "16px", width: "22px", height: "22px", accentColor: "var(--accent-green)" }} />
           Enable PIN Security
         </label>
 
         {pinEnabled && (
-          <input
-            type="number"
-            placeholder="••••"
-            value={pin}
-            onChange={(e) => setPin(e.target.value.slice(0, 4))} 
-            style={{ width: "100%", padding: "20px", borderRadius: "24px", border: "1px solid #333", backgroundColor: "#0A0A0A", color: "white", fontSize: "32px", marginBottom: "24px", boxSizing: "border-box", letterSpacing: "16px", textAlign: "center", fontWeight: "800" }}
-          />
+          <input type="number" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.slice(0, 4))} style={{ width: "100%", padding: "20px", borderRadius: "24px", border: "1px solid var(--border-strong)", backgroundColor: "var(--bg-input)", color: "var(--text-main)", fontSize: "32px", marginBottom: "24px", boxSizing: "border-box", letterSpacing: "16px", textAlign: "center", fontWeight: "800" }} />
         )}
 
-        <button
-          onClick={saveSettings}
-          style={{ width: "100%", padding: "16px", backgroundColor: "#69f0ae", color: "#000", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "800", cursor: "pointer", boxShadow: "0 4px 15px rgba(105, 240, 174, 0.3)" }}
-        >
+        <button onClick={saveSettings} style={{ width: "100%", padding: "16px", backgroundColor: "var(--accent-green)", color: "#fff", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "800", cursor: "pointer" }}>
           Save Settings
         </button>
 
-        {status && <p style={{ textAlign: "center", marginTop: "20px", fontWeight: "800", fontSize: "15px", color: status.includes("✅") ? "#69f0ae" : "#ff5252" }}>{status}</p>}
+        {status && <p style={{ textAlign: "center", marginTop: "20px", fontWeight: "800", fontSize: "15px", color: status.includes("✅") ? "var(--accent-green)" : "var(--accent-red)" }}>{status}</p>}
       </div>
     </div>
   );
