@@ -14,6 +14,13 @@ export default function TravelList({ user }) {
   const [travels, setTravels] = useState([]);
   const [filterText, setFilterText] = useState("");
   const [sortNewestFirst, setSortNewestFirst] = useState(true);
+  const [editingTravel, setEditingTravel] = useState(null); // Travel being edited
+  const [editForm, setEditForm] = useState({
+    location: "",
+    date: "",
+    expense: "",
+    notes: ""
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -35,20 +42,27 @@ export default function TravelList({ user }) {
     await deleteDoc(doc(db, "travels", id));
   };
 
-  const handleEdit = async (travel) => {
-    const newLocation = prompt("Update location", travel.location);
-    const newDate = prompt("Update date", travel.date);
-    const newExpense = prompt("Update expense", travel.expense);
-    const newNotes = prompt("Update notes", travel.notes);
+  const openEdit = (travel) => {
+    setEditingTravel(travel);
+    setEditForm({
+      location: travel.location,
+      date: travel.date,
+      expense: travel.expense,
+      notes: travel.notes
+    });
+  };
 
-    if (newLocation && newDate) {
-      await updateDoc(doc(db, "travels", travel.id), {
-        location: newLocation,
-        date: newDate,
-        expense: Number(newExpense) || 0,
-        notes: newNotes
-      });
-    }
+  const handleEditSave = async () => {
+    if (!editingTravel) return;
+
+    await updateDoc(doc(db, "travels", editingTravel.id), {
+      location: editForm.location,
+      date: editForm.date,
+      expense: Number(editForm.expense) || 0,
+      notes: editForm.notes
+    });
+
+    setEditingTravel(null); // Close modal
   };
 
   // Apply filter
@@ -86,6 +100,7 @@ export default function TravelList({ user }) {
         </button>
       </div>
 
+      {/* Total Expense */}
       <div
         style={{
           background: "#2c2c2c",
@@ -101,6 +116,7 @@ export default function TravelList({ user }) {
         Total Travel Expense: ₹{totalExpense}
       </div>
 
+      {/* Travel Entries */}
       {displayedTravels.map((travel) => (
         <div
           key={travel.id}
@@ -117,37 +133,135 @@ export default function TravelList({ user }) {
           <p>Expense: ₹{travel.expense}</p>
           <p>{travel.notes}</p>
 
-          <button
-            onClick={() => handleEdit(travel)}
-            style={{
-              marginTop: "10px",
-              padding: "8px",
-              width: "48%",
-              marginRight: "4%",
-              background: "#4caf50",
-              border: "none",
-              borderRadius: "6px",
-              color: "white"
-            }}
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(travel.id)}
-            style={{
-              marginTop: "10px",
-              padding: "8px",
-              width: "48%",
-              background: "#ff4444",
-              border: "none",
-              borderRadius: "6px",
-              color: "white"
-            }}
-          >
-            Delete
-          </button>
+          <div style={{ display: "flex", gap: "4%" }}>
+            <button
+              onClick={() => openEdit(travel)}
+              style={{
+                marginTop: "10px",
+                padding: "8px",
+                width: "48%",
+                background: "#4caf50",
+                border: "none",
+                borderRadius: "6px",
+                color: "white"
+              }}
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(travel.id)}
+              style={{
+                marginTop: "10px",
+                padding: "8px",
+                width: "48%",
+                background: "#ff4444",
+                border: "none",
+                borderRadius: "6px",
+                color: "white"
+              }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       ))}
+
+      {/* Edit Modal */}
+      {editingTravel && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000
+          }}
+        >
+          <div
+            style={{
+              background: "#1e1e1e",
+              padding: "20px",
+              borderRadius: "10px",
+              width: "90%",
+              maxWidth: "400px",
+              color: "white"
+            }}
+          >
+            <h3>Edit Travel Entry</h3>
+
+            <input
+              placeholder="Location"
+              value={editForm.location}
+              onChange={(e) =>
+                setEditForm({ ...editForm, location: e.target.value })
+              }
+              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
+            />
+
+            <input
+              type="date"
+              value={editForm.date}
+              onChange={(e) =>
+                setEditForm({ ...editForm, date: e.target.value })
+              }
+              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
+            />
+
+            <input
+              placeholder="Expense"
+              type="number"
+              value={editForm.expense}
+              onChange={(e) =>
+                setEditForm({ ...editForm, expense: e.target.value })
+              }
+              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
+            />
+
+            <input
+              placeholder="Notes"
+              value={editForm.notes}
+              onChange={(e) =>
+                setEditForm({ ...editForm, notes: e.target.value })
+              }
+              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
+            />
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+              <button
+                onClick={handleEditSave}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  background: "#4caf50",
+                  border: "none",
+                  borderRadius: "6px",
+                  color: "white"
+                }}
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingTravel(null)}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  background: "#ff4444",
+                  border: "none",
+                  borderRadius: "6px",
+                  color: "white"
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
