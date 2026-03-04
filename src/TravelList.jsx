@@ -12,26 +12,25 @@ import {
 
 export default function TravelList({ user }) {
   const [travels, setTravels] = useState([]);
-  const [filterText, setFilterText] = useState("");
-  const [sortNewestFirst, setSortNewestFirst] = useState(true);
-  const [editingTravel, setEditingTravel] = useState(null); // Travel being edited
+  const [editingTravel, setEditingTravel] = useState(null);
   const [editForm, setEditForm] = useState({
-    location: "",
     date: "",
-    expense: "",
+    officeType: "person",
+    officePerson: "Person A",
+    officeAmount: 0,
+    returnType: "person",
+    returnPerson: "Person A",
+    returnAmount: 0,
     notes: ""
   });
 
+  // Fetch travels
   useEffect(() => {
     if (!user) return;
 
     const q = query(collection(db, "travels"), where("userId", "==", user.uid));
-
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data()
-      }));
+      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setTravels(data);
     });
 
@@ -45,79 +44,44 @@ export default function TravelList({ user }) {
   const openEdit = (travel) => {
     setEditingTravel(travel);
     setEditForm({
-      location: travel.location,
       date: travel.date,
-      expense: travel.expense,
-      notes: travel.notes
+      officeType: travel.officeTrip.type,
+      officePerson: travel.officeTrip.name || "Person A",
+      officeAmount: travel.officeTrip.amount || 0,
+      returnType: travel.returnTrip.type,
+      returnPerson: travel.returnTrip.name || "Person A",
+      returnAmount: travel.returnTrip.amount || 0,
+      notes: travel.notes || ""
     });
   };
 
   const handleEditSave = async () => {
     if (!editingTravel) return;
 
+    const totalAmount = (editForm.officeAmount || 0) + (editForm.returnAmount || 0);
+
     await updateDoc(doc(db, "travels", editingTravel.id), {
-      location: editForm.location,
       date: editForm.date,
-      expense: Number(editForm.expense) || 0,
+      officeTrip: {
+        type: editForm.officeType,
+        name: editForm.officeType === "person" ? editForm.officePerson : undefined,
+        amount: Number(editForm.officeAmount) || 0
+      },
+      returnTrip: {
+        type: editForm.returnType,
+        name: editForm.returnType === "person" ? editForm.returnPerson : undefined,
+        amount: Number(editForm.returnAmount) || 0
+      },
+      totalAmount,
       notes: editForm.notes
     });
 
-    setEditingTravel(null); // Close modal
+    setEditingTravel(null);
   };
-
-  // Apply filter
-  let displayedTravels = travels.filter((t) =>
-    t.location.toLowerCase().includes(filterText.toLowerCase())
-  );
-
-  // Apply sort
-  displayedTravels.sort((a, b) =>
-    sortNewestFirst
-      ? b.createdAt?.toMillis() - a.createdAt?.toMillis()
-      : a.createdAt?.toMillis() - b.createdAt?.toMillis()
-  );
-
-  const totalExpense = displayedTravels.reduce(
-    (sum, item) => sum + (item.expense || 0),
-    0
-  );
 
   return (
     <div>
-      {/* Filter and Sort Controls */}
-      <div style={{ marginBottom: "15px" }}>
-        <input
-          placeholder="Filter by location"
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          style={{ width: "70%", padding: "6px", marginRight: "10px" }}
-        />
-        <button
-          onClick={() => setSortNewestFirst(!sortNewestFirst)}
-          style={{ padding: "6px" }}
-        >
-          Sort: {sortNewestFirst ? "Newest First" : "Oldest First"}
-        </button>
-      </div>
-
-      {/* Total Expense */}
-      <div
-        style={{
-          background: "#2c2c2c",
-          padding: "15px",
-          borderRadius: "10px",
-          marginBottom: "20px",
-          textAlign: "center",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "18px"
-        }}
-      >
-        Total Travel Expense: ₹{totalExpense}
-      </div>
-
-      {/* Travel Entries */}
-      {displayedTravels.map((travel) => (
+      {travels.map((travel) => (
         <div
           key={travel.id}
           style={{
@@ -128,18 +92,22 @@ export default function TravelList({ user }) {
             color: "white"
           }}
         >
-          <h3>{travel.location}</h3>
-          <p>Date: {travel.date}</p>
-          <p>Expense: ₹{travel.expense}</p>
-          <p>{travel.notes}</p>
+          <h3>{travel.date}</h3>
+          <p>
+            Office → {travel.officeTrip.name || "Bus/Train"} ({travel.officeTrip.type}) - ₹{travel.officeTrip.amount}
+          </p>
+          <p>
+            Return → {travel.returnTrip.name || "Bus/Train"} ({travel.returnTrip.type}) - ₹{travel.returnTrip.amount}
+          </p>
+          <p>Total: ₹{travel.totalAmount}</p>
+          <p>Notes: {travel.notes}</p>
 
           <div style={{ display: "flex", gap: "4%" }}>
             <button
               onClick={() => openEdit(travel)}
               style={{
-                marginTop: "10px",
+                flex: 1,
                 padding: "8px",
-                width: "48%",
                 background: "#4caf50",
                 border: "none",
                 borderRadius: "6px",
@@ -151,9 +119,8 @@ export default function TravelList({ user }) {
             <button
               onClick={() => handleDelete(travel.id)}
               style={{
-                marginTop: "10px",
+                flex: 1,
                 padding: "8px",
-                width: "48%",
                 background: "#ff4444",
                 border: "none",
                 borderRadius: "6px",
@@ -194,44 +161,83 @@ export default function TravelList({ user }) {
           >
             <h3>Edit Travel Entry</h3>
 
-            <input
-              placeholder="Location"
-              value={editForm.location}
-              onChange={(e) =>
-                setEditForm({ ...editForm, location: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
-            />
-
+            {/* Date */}
             <input
               type="date"
               value={editForm.date}
-              onChange={(e) =>
-                setEditForm({ ...editForm, date: e.target.value })
-              }
+              onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
               style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
             />
+
+            {/* Office Trip */}
+            <label>Office Trip:</label>
+            <select
+              value={editForm.officeType}
+              onChange={(e) => setEditForm({ ...editForm, officeType: e.target.value })}
+              style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+            >
+              <option value="person">Person</option>
+              <option value="bus/train">Bus/Train</option>
+            </select>
+
+            {editForm.officeType === "person" && (
+              <select
+                value={editForm.officePerson}
+                onChange={(e) => setEditForm({ ...editForm, officePerson: e.target.value })}
+                style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+              >
+                <option value="Person A">Person A</option>
+                <option value="Person B">Person B</option>
+              </select>
+            )}
 
             <input
-              placeholder="Expense"
               type="number"
-              value={editForm.expense}
-              onChange={(e) =>
-                setEditForm({ ...editForm, expense: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
+              placeholder="Amount"
+              value={editForm.officeAmount}
+              onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) })}
+              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
             />
 
+            {/* Return Trip */}
+            <label>Return Trip:</label>
+            <select
+              value={editForm.returnType}
+              onChange={(e) => setEditForm({ ...editForm, returnType: e.target.value })}
+              style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+            >
+              <option value="person">Person</option>
+              <option value="bus/train">Bus/Train</option>
+            </select>
+
+            {editForm.returnType === "person" && (
+              <select
+                value={editForm.returnPerson}
+                onChange={(e) => setEditForm({ ...editForm, returnPerson: e.target.value })}
+                style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
+              >
+                <option value="Person A">Person A</option>
+                <option value="Person B">Person B</option>
+              </select>
+            )}
+
+            <input
+              type="number"
+              placeholder="Amount"
+              value={editForm.returnAmount}
+              onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) })}
+              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+            />
+
+            {/* Notes */}
             <input
               placeholder="Notes"
               value={editForm.notes}
-              onChange={(e) =>
-                setEditForm({ ...editForm, notes: e.target.value })
-              }
+              onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
               style={{ width: "100%", padding: "8px", marginBottom: "8px" }}
             />
 
-            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
               <button
                 onClick={handleEditSave}
                 style={{
