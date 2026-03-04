@@ -52,7 +52,7 @@ export default function YearlySummary({ user, navigateTo }) {
     }
   });
 
-    return (
+  return (
     <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", padding: "0 8px" }}>
         <h2 style={{ margin: 0, color: "var(--text-main)", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>Yearly</h2>
@@ -96,3 +96,4 @@ export default function YearlySummary({ user, navigateTo }) {
       </button>
     </div>
   );
+}
