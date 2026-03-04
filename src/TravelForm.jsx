@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, addDoc, query, where, onSnapshot, doc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, doc, getDocs } from "firebase/firestore"; // Added getDocs
 
 export default function TravelForm({ user }) {
   const [persons, setPersons] = useState([]);
@@ -14,13 +14,9 @@ export default function TravelForm({ user }) {
   const [eveningAmount, setEveningAmount] = useState(0);
   const [eveningNote, setEveningNote] = useState("");
 
-  // NEW: Track if the selected date's month is locked
   const [isMonthLocked, setIsMonthLocked] = useState(false);
-
-  // Derived month key (e.g., "2026-03") from the selected date
   const currentMonthKey = date.substring(0, 7);
 
-  // Fetch Persons
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "persons"), where("userId", "==", user.uid));
@@ -30,7 +26,6 @@ export default function TravelForm({ user }) {
     return () => unsubscribe();
   }, [user]);
 
-  // NEW: Listen for the lock status of the selected month
   useEffect(() => {
     if (!user || !currentMonthKey) return;
     const monthDocId = `${user.uid}_${currentMonthKey}`;
@@ -56,9 +51,24 @@ export default function TravelForm({ user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!date || !user || isMonthLocked) return; // Block submission if locked
+    if (!date || !user || isMonthLocked) return; 
 
     try {
+      // NEW: Check for duplicate entry for this exact date
+      const duplicateCheckQuery = query(
+        collection(db, "travels"),
+        where("userId", "==", user.uid),
+        where("date", "==", date)
+      );
+      
+      const duplicateSnapshot = await getDocs(duplicateCheckQuery);
+      
+      if (!duplicateSnapshot.empty) {
+        alert("⚠️ You already have an entry for this date! Please go to the History tab to edit it.");
+        return; // Stop the save process
+      }
+
+      // If no duplicate, proceed to save
       await addDoc(collection(db, "travels"), {
         userId: user.uid,
         date: date,
@@ -91,72 +101,64 @@ export default function TravelForm({ user }) {
 
   const availableMethods = ["Own Vehicle", "Train", "Bus", ...persons.map(p => p.name)];
 
+  // Android 15 / Material 3 Style Constants
+  const cardStyle = { backgroundColor: "#111111", padding: "16px", borderRadius: "20px", marginBottom: "16px" };
+  const inputStyle = { width: "100%", padding: "12px", marginBottom: "8px", boxSizing: "border-box", borderRadius: "12px", border: "none", backgroundColor: "#222222", color: "white", fontSize: "16px" };
+
   return (
-    <div style={{ backgroundColor: "#1e1e1e", padding: "20px", borderRadius: "10px", color: "white", marginBottom: "20px" }}>
-      <h3 style={{ marginTop: 0 }}>Add Daily Entry</h3>
+    <div style={{ backgroundColor: "#000000", padding: "4px", color: "white", marginBottom: "20px" }}>
+      <h3 style={{ marginTop: 0, fontSize: "22px", fontWeight: "600", paddingLeft: "4px" }}>Add Daily Entry</h3>
       <form onSubmit={handleSubmit}>
         
-        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            style={{ flex: 1, padding: "8px", boxSizing: "border-box" }}
-          />
-          <label style={{ display: "flex", alignItems: "center", cursor: "pointer", backgroundColor: isNotGoing ? "#ef4444" : "#333", padding: "8px 12px", borderRadius: "4px" }}>
-            <input
-              type="checkbox"
-              checked={isNotGoing}
-              onChange={(e) => setIsNotGoing(e.target.checked)}
-              style={{ marginRight: "8px" }}
-            />
+        <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+          <label style={{ display: "flex", alignItems: "center", cursor: "pointer", backgroundColor: isNotGoing ? "#7f1d1d" : "#222222", color: isNotGoing ? "#fca5a5" : "white", padding: "0 16px", borderRadius: "12px", fontWeight: "500" }}>
+            <input type="checkbox" checked={isNotGoing} onChange={(e) => setIsNotGoing(e.target.checked)} style={{ marginRight: "8px", accentColor: "#ef4444" }} />
             Not Going
           </label>
         </div>
 
         {!isNotGoing && (
           <>
-            <div style={{ backgroundColor: "#2d2d2d", padding: "10px", borderRadius: "6px", marginBottom: "15px" }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#60a5fa" }}>☀️ Morning</h4>
-              <select value={morningMethod} onChange={(e) => handleMethodChange("morning", e.target.value)} style={{ width: "100%", padding: "8px", marginBottom: "8px", boxSizing: "border-box" }}>
+            <div style={cardStyle}>
+              <h4 style={{ margin: "0 0 12px 0", color: "#a8c7fa", fontSize: "16px" }}>☀️ Morning</h4>
+              <select value={morningMethod} onChange={(e) => handleMethodChange("morning", e.target.value)} style={inputStyle}>
                 {availableMethods.map((m, i) => <option key={i} value={m}>{m}</option>)}
               </select>
               <div style={{ display: "flex", gap: "10px" }}>
-                <input type="number" placeholder="Amount (₹)" value={morningAmount} onChange={(e) => setMorningAmount(e.target.value)} style={{ flex: 1, padding: "8px", boxSizing: "border-box" }} />
-                <input type="text" placeholder="Note (optional)" value={morningNote} onChange={(e) => setMorningNote(e.target.value)} style={{ flex: 2, padding: "8px", boxSizing: "border-box" }} />
+                <input type="number" placeholder="Amount (₹)" value={morningAmount} onChange={(e) => setMorningAmount(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                <input type="text" placeholder="Note (opt)" value={morningNote} onChange={(e) => setMorningNote(e.target.value)} style={{ ...inputStyle, flex: 1.5 }} />
               </div>
             </div>
 
-            <div style={{ backgroundColor: "#2d2d2d", padding: "10px", borderRadius: "6px", marginBottom: "15px" }}>
-              <h4 style={{ margin: "0 0 10px 0", color: "#f472b6" }}>🌙 Evening</h4>
-              <select value={eveningMethod} onChange={(e) => handleMethodChange("evening", e.target.value)} style={{ width: "100%", padding: "8px", marginBottom: "8px", boxSizing: "border-box" }}>
+            <div style={cardStyle}>
+              <h4 style={{ margin: "0 0 12px 0", color: "#f9a8d4", fontSize: "16px" }}>🌙 Evening</h4>
+              <select value={eveningMethod} onChange={(e) => handleMethodChange("evening", e.target.value)} style={inputStyle}>
                 {availableMethods.map((m, i) => <option key={i} value={m}>{m}</option>)}
               </select>
               <div style={{ display: "flex", gap: "10px" }}>
-                <input type="number" placeholder="Amount (₹)" value={eveningAmount} onChange={(e) => setEveningAmount(e.target.value)} style={{ flex: 1, padding: "8px", boxSizing: "border-box" }} />
-                <input type="text" placeholder="Note (optional)" value={eveningNote} onChange={(e) => setEveningNote(e.target.value)} style={{ flex: 2, padding: "8px", boxSizing: "border-box" }} />
+                <input type="number" placeholder="Amount (₹)" value={eveningAmount} onChange={(e) => setEveningAmount(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                <input type="text" placeholder="Note (opt)" value={eveningNote} onChange={(e) => setEveningNote(e.target.value)} style={{ ...inputStyle, flex: 1.5 }} />
               </div>
             </div>
           </>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px" }}>
-          <strong style={{ fontSize: "18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", padding: "0 4px" }}>
+          <strong style={{ fontSize: "20px", fontWeight: "700" }}>
             Total: ₹{isNotGoing ? 0 : (Number(morningAmount) || 0) + (Number(eveningAmount) || 0)}
           </strong>
           
-          {/* NEW: Hide save button if locked */}
           {isMonthLocked ? (
-            <div style={{ padding: "10px", backgroundColor: "#064e3b", color: "#34d399", borderRadius: "6px", fontSize: "14px", fontWeight: "bold" }}>
-              🔒 Month Locked
+            <div style={{ padding: "12px 20px", backgroundColor: "#064e3b", color: "#34d399", borderRadius: "24px", fontSize: "14px", fontWeight: "bold" }}>
+              🔒 Locked
             </div>
           ) : (
-            <button type="submit" style={{ padding: "10px 20px", backgroundColor: "#4caf50", color: "white", border: "none", borderRadius: "6px", fontSize: "16px", cursor: "pointer" }}>
+            <button type="submit" style={{ padding: "14px 24px", backgroundColor: "#a8c7fa", color: "#000000", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "bold", cursor: "pointer" }}>
               Save Entry
             </button>
           )}
         </div>
-
       </form>
     </div>
   );
