@@ -17,7 +17,7 @@ export default function TravelForm({ user }) {
   const handleSubmit = async () => {
     if (!date || !user) return;
 
-    // Ensure amount is always a number
+    // Ensure numeric amounts
     const officeAmt = Number(officeAmount) || 0;
     const returnAmt = Number(returnAmount) || 0;
 
@@ -50,6 +50,24 @@ export default function TravelForm({ user }) {
     setNotes("");
   };
 
+  const handleOfficeTypeChange = (type) => {
+    setOfficeType(type);
+    if (type === "person") {
+      setOfficeAmount(personAmounts[officePerson] || 0);
+    } else {
+      setOfficeAmount(0);
+    }
+  };
+
+  const handleReturnTypeChange = (type) => {
+    setReturnType(type);
+    if (type === "person") {
+      setReturnAmount(personAmounts[returnPerson] || 0);
+    } else {
+      setReturnAmount(0);
+    }
+  };
+
   const handleOfficePersonChange = (person) => {
     setOfficePerson(person);
     if (officeType === "person") setOfficeAmount(personAmounts[person] || 0);
@@ -73,7 +91,7 @@ export default function TravelForm({ user }) {
       <label>Office Trip:</label>
       <select
         value={officeType}
-        onChange={(e) => setOfficeType(e.target.value)}
+        onChange={(e) => handleOfficeTypeChange(e.target.value)}
         style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
       >
         <option value="person">Person</option>
@@ -95,7 +113,7 @@ export default function TravelForm({ user }) {
         type="number"
         placeholder="Amount"
         value={officeAmount}
-        onChange={(e) => setOfficeAmount(Number(e.target.value))}
+        onChange={(e) => setOfficeAmount(Number(e.target.value) || 0)}
         style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
       />
 
@@ -103,7 +121,7 @@ export default function TravelForm({ user }) {
       <label>Return Trip:</label>
       <select
         value={returnType}
-        onChange={(e) => setReturnType(e.target.value)}
+        onChange={(e) => handleReturnTypeChange(e.target.value)}
         style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
       >
         <option value="person">Person</option>
@@ -125,7 +143,7 @@ export default function TravelForm({ user }) {
         type="number"
         placeholder="Amount"
         value={returnAmount}
-        onChange={(e) => setReturnAmount(Number(e.target.value))}
+        onChange={(e) => setReturnAmount(Number(e.target.value) || 0)}
         style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
       />
 
