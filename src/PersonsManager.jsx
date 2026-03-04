@@ -1,148 +1,91 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 export default function PersonsManager({ user }) {
   const [persons, setPersons] = useState([]);
-  const [name, setName] = useState("");
-  const [defaultAmount, setDefaultAmount] = useState("");
-  const [isStarred, setIsStarred] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newAmount, setNewAmount] = useState("");
 
-  // Fetch all persons for the logged-in user
   useEffect(() => {
     if (!user) return;
-
     const q = query(collection(db, "persons"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setPersons(data);
+      setPersons(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-
     return () => unsubscribe();
   }, [user]);
 
-  // Add a new person to Firestore
-  // ---> THE FIX IS RIGHT HERE: added "async" before (e) <---
   const handleAddPerson = async (e) => {
     e.preventDefault();
-    if (!name || !defaultAmount) {
-      alert("Please enter both a name and an amount.");
-      return;
-    }
-
+    if (!newName || !newAmount || !user) return;
     try {
-      // Generate Indian Date Format (DD/MM/YYYY)
-      const today = new Date();
-      const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-
       await addDoc(collection(db, "persons"), {
-        userId: user.uid,
-        name: name,
-        defaultAmount: Number(defaultAmount),
-        isStarred: isStarred, // True = Settlement enabled
-        createdAtDate: formattedDate,
-        createdAtTimestamp: new Date(),
+        userId: user.uid, name: newName, defaultAmount: Number(newAmount), isStarred: false, createdAt: new Date()
       });
-
-      // Reset form fields
-      setName("");
-      setDefaultAmount("");
-      setIsStarred(false);
-    } catch (error) {
-      console.error("Error adding person: ", error);
-      alert("Failed to add person. Check your Firebase rules!");
-    }
+      setNewName(""); setNewAmount("");
+    } catch (error) { alert("Error adding person"); }
   };
 
-  // Toggle the settlement star tracking
-  const toggleStar = async (id, currentStatus) => {
-    await updateDoc(doc(db, "persons", id), {
-      isStarred: !currentStatus,
-    });
-  };
-
-  // Delete a person
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "persons", id));
+    if (window.confirm("Delete this person?")) await deleteDoc(doc(db, "persons", id));
   };
+
+  const toggleStar = async (person) => {
+    await updateDoc(doc(db, "persons", person.id), { isStarred: !person.isStarred });
+  };
+
+  const inputStyle = { width: "100%", padding: "16px", marginBottom: "12px", boxSizing: "border-box", borderRadius: "16px", border: "none", backgroundColor: "#0A0A0A", color: "white", fontSize: "16px" };
 
   return (
-    <div style={{ padding: "15px", backgroundColor: "#1e1e1e", color: "white", borderRadius: "8px" }}>
-      <h2>Manage Persons</h2>
-      
-      {/* Form to Add a Person */}
-      <form onSubmit={handleAddPerson} style={{ marginBottom: "20px" }}>
-        <input
-          type="text"
-          placeholder="Person Name (e.g. Prashant Surve)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
-        />
-        
-        <input
-          type="number"
-          placeholder="Default Amount (₹) (e.g. 55)"
-          value={defaultAmount}
-          onChange={(e) => setDefaultAmount(e.target.value)}
-          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
-        />
+    <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif", color: "white" }}>
+      <h2 style={{ margin: "0 0 24px 0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px", paddingLeft: "8px" }}>Manage Persons</h2>
 
-        <label style={{ display: "flex", alignItems: "center", marginBottom: "10px", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={isStarred}
-            onChange={(e) => setIsStarred(e.target.checked)}
-            style={{ marginRight: "10px", width: "18px", height: "18px" }}
-          />
-          Enable Settlement Tracking (Star)
-        </label>
-
-        <button 
-          type="submit" 
-          style={{ width: "100%", padding: "10px", backgroundColor: "#4caf50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-        >
-          Add Person
-        </button>
-      </form>
-
-      <hr style={{ border: "1px solid #333", marginBottom: "20px" }} />
-
-      {/* List of Existing Persons */}
-      <div>
-        <h3>Your Saved Persons</h3>
-        {persons.length === 0 ? (
-          <p style={{ color: "#888" }}>No persons added yet.</p>
-        ) : (
-          persons.map((person) => (
-            <div key={person.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#2d2d2d", padding: "10px", marginBottom: "10px", borderRadius: "6px" }}>
-              <div>
-                <strong style={{ display: "block", fontSize: "16px" }}>
-                  {person.name} {person.isStarred ? "⭐" : ""}
-                </strong>
-                <span style={{ color: "#aaa", fontSize: "14px" }}>
-                  Default: ₹{person.defaultAmount} | Added: {person.createdAtDate}
-                </span>
-              </div>
-              
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button 
-                  onClick={() => toggleStar(person.id, person.isStarred)}
-                  style={{ padding: "6px 12px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "4px" }}
-                >
-                  {person.isStarred ? "Unstar" : "Star"}
-                </button>
-                <button 
-                  onClick={() => handleDelete(person.id)}
-                  style={{ padding: "6px 12px", backgroundColor: "#ef4444", color: "white", border: "none", borderRadius: "4px" }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
-        )}
+      <div style={{ backgroundColor: "#111111", padding: "24px", borderRadius: "32px", marginBottom: "32px", border: "1px solid #222" }}>
+        <h3 style={{ marginTop: 0, color: "#448aff", fontSize: "16px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>Add Colleague</h3>
+        <form onSubmit={handleAddPerson} style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <input type="text" placeholder="Name (e.g., Prashant)" value={newName} onChange={(e) => setNewName(e.target.value)} style={{ ...inputStyle, flex: 2, marginBottom: 0 }} />
+          <input type="number" placeholder="₹ Amount" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
+          <button type="submit" style={{ width: "100%", padding: "16px", backgroundColor: "#448aff", color: "white", border: "none", borderRadius: "20px", fontWeight: "800", fontSize: "16px", cursor: "pointer", marginTop: "12px", boxShadow: "0 4px 15px rgba(68, 138, 255, 0.3)" }}>
+            Add Person
+          </button>
+        </form>
       </div>
+
+      <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "16px", paddingLeft: "8px" }}>Saved Persons</h3>
+      {persons.length === 0 && <p style={{ color: "#666", paddingLeft: "8px", fontWeight: "600" }}>No persons added yet.</p>}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {persons.map((person) => (
+          <div key={person.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#111111", padding: "16px 20px", borderRadius: "24px", border: "1px solid #222" }}>
+            
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: "18px", fontWeight: "700", display: "block", marginBottom: "4px" }}>{person.name}</span>
+              <span style={{ color: "#888", fontSize: "14px", fontWeight: "600" }}>Default: ₹{person.defaultAmount}</span>
+            </div>
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button 
+                onClick={() => toggleStar(person)} 
+                title="Star to track settlements"
+                style={{ background: person.isStarred ? "#ffd74020" : "#1A1A1A", border: person.isStarred ? "1px solid #ffd74050" : "1px solid #333", color: person.isStarred ? "#ffd740" : "#666", padding: "12px", borderRadius: "16px", cursor: "pointer", fontSize: "16px", transition: "all 0.2s" }}
+              >
+                {person.isStarred ? "⭐ Tracked" : "☆ Track"}
+              </button>
+              <button 
+                onClick={() => handleDelete(person.id)} 
+                style={{ background: "#ff525215", border: "1px solid #ff525230", color: "#ff5252", padding: "12px 16px", borderRadius: "16px", cursor: "pointer", fontWeight: "700" }}
+              >
+                Delete
+              </button>
+            </div>
+
+          </div>
+        ))}
+      </div>
+      <p style={{ color: "#666", fontSize: "13px", marginTop: "24px", textAlign: "center", padding: "0 20px" }}>
+        Tip: Star a person (⭐) to automatically track their monthly settlements in the Pay tab.
+      </p>
     </div>
   );
 }
