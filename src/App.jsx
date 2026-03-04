@@ -56,7 +56,6 @@ export default function App() {
       </div>
       
       <p style={{ color: "#666", marginBottom: "20px" }}>Logged in as: <strong>{user.email}</strong></p>
-      <p style={{ color: "#666", marginBottom: "20px" }}>Logged in as: <strong>{user.email}</strong></p>
 
       {/* NEW DASHBOARD PLACED HERE */}
       <MonthlyDashboard user={user} />
