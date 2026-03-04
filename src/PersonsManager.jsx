@@ -71,3 +71,4 @@ export default function PersonsManager({ user }) {
       </div>
     </div>
   );
+}
