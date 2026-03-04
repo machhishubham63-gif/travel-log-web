@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from "firebase/firestore"; // Added deleteDoc and doc
 
 export default function Settlements({ user }) {
   const [monthKey, setMonthKey] = useState(new Date().toISOString().substring(0, 7));
@@ -14,17 +14,17 @@ export default function Settlements({ user }) {
     if (!user) return;
     const q = query(collection(db, "persons"), where("userId", "==", user.uid), where("isStarred", "==", true));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPersons(snapshot.docs.map(d => d.data()));
+      setPersons(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return () => unsubscribe();
   }, [user]);
 
-  // 2. Fetch ALL Travels (needed to calculate past carry-forward balances)
+  // 2. Fetch ALL Travels
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "travels"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setAllTravels(snapshot.docs.map(d => d.data()));
+      setAllTravels(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return () => unsubscribe();
   }, [user]);
@@ -34,7 +34,7 @@ export default function Settlements({ user }) {
     if (!user) return;
     const q = query(collection(db, "settlements"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setAllSettlements(snapshot.docs.map(d => d.data()));
+      setAllSettlements(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return () => unsubscribe();
   }, [user]);
@@ -52,13 +52,24 @@ export default function Settlements({ user }) {
           userId: user.uid,
           personName: personName,
           amount: pendingAmount,
-          monthKey: monthKey, // Logs the payment against the currently viewed month
+          monthKey: monthKey, 
           createdAt: new Date()
         });
-        alert(`Successfully settled ₹${pendingAmount} with ${personName}!`);
       } catch (error) {
         console.error("Error saving settlement:", error);
         alert("Failed to save settlement. Check your network or database rules.");
+      }
+    }
+  };
+
+  // --- HANDLE UNDO PAYMENT ---
+  const handleUndoSettlement = async (settlementId) => {
+    if (window.confirm("Are you sure you want to undo this payment?")) {
+      try {
+        await deleteDoc(doc(db, "settlements", settlementId));
+      } catch (error) {
+        console.error("Error deleting settlement:", error);
+        alert("Failed to undo settlement.");
       }
     }
   };
@@ -94,7 +105,7 @@ export default function Settlements({ user }) {
     const totalPayable = carryForward + currentOwed;
     const finalPending = totalPayable - currentPaidTotal;
 
-    return { carryForward, currentOwed, totalPayable, currentPaidTotal, finalPending };
+    return { carryForward, currentOwed, totalPayable, currentPaidTotal, finalPending, currentPayments };
   };
 
   return (
@@ -118,7 +129,7 @@ export default function Settlements({ user }) {
 
       {persons.map(person => {
         const ledger = calculateLedger(person.name);
-        const isSettled = ledger.finalPending <= 0;
+        const isSettled = ledger.finalPending <= 0 && ledger.totalPayable > 0;
 
         return (
           <div key={person.name} style={{ backgroundColor: "#1e1e1e", padding: "20px", borderRadius: "10px", marginBottom: "15px", color: "white" }}>
@@ -159,12 +170,12 @@ export default function Settlements({ user }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <span style={{ display: "block", fontSize: "12px", color: "#aaa" }}>Current Pending</span>
-                <strong style={{ fontSize: "22px", color: isSettled ? "#34d399" : "#f59e0b" }}>
+                <strong style={{ fontSize: "22px", color: ledger.finalPending <= 0 ? "#34d399" : "#f59e0b" }}>
                   ₹{ledger.finalPending}
                 </strong>
               </div>
               
-              {!isSettled && (
+              {ledger.finalPending > 0 && (
                 <button 
                   onClick={() => handleSettleFull(person.name, ledger.finalPending)}
                   style={{ padding: "10px 15px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
@@ -173,6 +184,24 @@ export default function Settlements({ user }) {
                 </button>
               )}
             </div>
+
+            {/* --- NEW: PAYMENT HISTORY & UNDO --- */}
+            {ledger.currentPayments.length > 0 && (
+              <div style={{ marginTop: "15px", borderTop: "1px solid #333", paddingTop: "12px" }}>
+                <p style={{ fontSize: "12px", color: "#aaa", margin: "0 0 8px 0" }}>Payments Recorded This Month:</p>
+                {ledger.currentPayments.map(payment => (
+                  <div key={payment.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#333", padding: "8px 12px", borderRadius: "6px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "14px", color: "#34d399" }}>₹{payment.amount} Paid</span>
+                    <button 
+                      onClick={() => handleUndoSettlement(payment.id)}
+                      style={{ background: "transparent", border: "1px solid #ef4444", color: "#ef4444", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", fontSize: "12px" }}
+                    >
+                      Undo ❌
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
           </div>
         );
