@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  updateDoc
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "firebase/firestore";
 
 export default function TravelList({ user }) {
   const personAmounts = { "Person A": 100, "Person B": 120 };
@@ -38,39 +30,33 @@ export default function TravelList({ user }) {
     setEditForm({
       date: travel.date,
       officeOption: travel.officeTrip.name || travel.officeTrip.type,
-      officeAmount: travel.officeTrip.amount || 0,
+      officeAmount: travel.officeTrip.amount,
       returnOption: travel.returnTrip.name || travel.returnTrip.type,
-      returnAmount: travel.returnTrip.amount || 0,
-      notes: travel.notes || ""
+      returnAmount: travel.returnTrip.amount,
+      notes: travel.notes || "",
     });
   };
 
   const handleEditSave = async () => {
     if (!editingTravel) return;
 
-    const officeType =
-      editForm.officeOption === "Person A" || editForm.officeOption === "Person B"
-        ? "person"
-        : "bus/train";
-    const returnType =
-      editForm.returnOption === "Person A" || editForm.returnOption === "Person B"
-        ? "person"
-        : "bus/train";
+    const officeType = editForm.officeOption in personAmounts ? "person" : "bus/train";
+    const returnType = editForm.returnOption in personAmounts ? "person" : "bus/train";
 
     await updateDoc(doc(db, "travels", editingTravel.id), {
       date: editForm.date,
       officeTrip: {
         type: officeType,
         name: officeType === "person" ? editForm.officeOption : undefined,
-        amount: Number(editForm.officeAmount) || 0
+        amount: Number(editForm.officeAmount) || 0,
       },
       returnTrip: {
         type: returnType,
         name: returnType === "person" ? editForm.returnOption : undefined,
-        amount: Number(editForm.returnAmount) || 0
+        amount: Number(editForm.returnAmount) || 0,
       },
       totalAmount: (Number(editForm.officeAmount) || 0) + (Number(editForm.returnAmount) || 0),
-      notes: editForm.notes
+      notes: editForm.notes,
     });
 
     setEditingTravel(null);
@@ -86,7 +72,7 @@ export default function TravelList({ user }) {
             padding: "15px",
             marginBottom: "12px",
             borderRadius: "10px",
-            color: "white"
+            color: "white",
           }}
         >
           <h3>{travel.date}</h3>
@@ -110,7 +96,7 @@ export default function TravelList({ user }) {
                 background: "#4caf50",
                 border: "none",
                 borderRadius: "6px",
-                color: "white"
+                color: "white",
               }}
             >
               Edit
@@ -123,7 +109,7 @@ export default function TravelList({ user }) {
                 background: "#ff4444",
                 border: "none",
                 borderRadius: "6px",
-                color: "white"
+                color: "white",
               }}
             >
               Delete
@@ -144,7 +130,7 @@ export default function TravelList({ user }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1000
+            zIndex: 1000,
           }}
         >
           <div
@@ -154,7 +140,7 @@ export default function TravelList({ user }) {
               borderRadius: "10px",
               width: "90%",
               maxWidth: "400px",
-              color: "white"
+              color: "white",
             }}
           >
             <h3>Edit Travel Entry</h3>
@@ -172,12 +158,11 @@ export default function TravelList({ user }) {
               value={editForm.officeOption}
               onChange={(e) => {
                 const val = e.target.value;
-                setEditForm({ ...editForm, officeOption: val });
-                setEditForm((prev) => ({
-                  ...prev,
-                  officeAmount:
-                    val === "Person A" || val === "Person B" ? personAmounts[val] : prev.officeAmount || 0
-                }));
+                setEditForm({
+                  ...editForm,
+                  officeOption: val,
+                  officeAmount: val in personAmounts ? personAmounts[val] : editForm.officeAmount || 0,
+                });
               }}
               style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
             >
@@ -187,14 +172,12 @@ export default function TravelList({ user }) {
               <option>Train</option>
             </select>
 
-            {(editForm.officeOption === "Bus" || editForm.officeOption === "Train") && (
-              <input
-                type="number"
-                value={editForm.officeAmount}
-                onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) || 0 })}
-                style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-              />
-            )}
+            <input
+              type="number"
+              value={editForm.officeAmount}
+              onChange={(e) => setEditForm({ ...editForm, officeAmount: Number(e.target.value) || 0 })}
+              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+            />
 
             {/* Return Trip */}
             <label>Return Trip:</label>
@@ -202,12 +185,11 @@ export default function TravelList({ user }) {
               value={editForm.returnOption}
               onChange={(e) => {
                 const val = e.target.value;
-                setEditForm({ ...editForm, returnOption: val });
-                setEditForm((prev) => ({
-                  ...prev,
-                  returnAmount:
-                    val === "Person A" || val === "Person B" ? personAmounts[val] : prev.returnAmount || 0
-                }));
+                setEditForm({
+                  ...editForm,
+                  returnOption: val,
+                  returnAmount: val in personAmounts ? personAmounts[val] : editForm.returnAmount || 0,
+                });
               }}
               style={{ width: "100%", padding: "6px", marginBottom: "4px" }}
             >
@@ -217,14 +199,12 @@ export default function TravelList({ user }) {
               <option>Train</option>
             </select>
 
-            {(editForm.returnOption === "Bus" || editForm.returnOption === "Train") && (
-              <input
-                type="number"
-                value={editForm.returnAmount}
-                onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) || 0 })}
-                style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
-              />
-            )}
+            <input
+              type="number"
+              value={editForm.returnAmount}
+              onChange={(e) => setEditForm({ ...editForm, returnAmount: Number(e.target.value) || 0 })}
+              style={{ width: "100%", padding: "6px", marginBottom: "8px" }}
+            />
 
             {/* Notes */}
             <input
@@ -243,7 +223,7 @@ export default function TravelList({ user }) {
                   background: "#4caf50",
                   border: "none",
                   borderRadius: "6px",
-                  color: "white"
+                  color: "white",
                 }}
               >
                 Save
@@ -256,7 +236,7 @@ export default function TravelList({ user }) {
                   background: "#ff4444",
                   border: "none",
                   borderRadius: "6px",
-                  color: "white"
+                  color: "white",
                 }}
               >
                 Cancel
