@@ -88,11 +88,11 @@ export default function App() {
             Logout
           </button>
         </div>
-      </div>
       
-      <div style={{ padding: "16px", paddingBottom: "110px", flex: 1 }}>
-        {renderTabContent()}
-      </div>
+        <div style={{ padding: "16px", paddingBottom: "110px", flex: 1 }}>
+        <div key={activeTab} className="page-transition">
+          {renderTabContent()}
+        </div>
 
       <div style={{ position: "fixed", bottom: 0, left: 0, width: "100%", backgroundColor: "var(--bg-card)", borderTop: "1px solid var(--border-light)", display: "flex", justifyContent: "space-around", padding: "10px 4px", paddingBottom: "calc(10px + env(safe-area-inset-bottom))", zIndex: 1000 }}>
         <NavButton label="Dash" icon={icons.dashboard} isActive={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
