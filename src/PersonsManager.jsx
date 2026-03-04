@@ -37,55 +37,47 @@ export default function PersonsManager({ user }) {
 
   const inputStyle = { width: "100%", padding: "16px", marginBottom: "12px", boxSizing: "border-box", borderRadius: "16px", border: "none", backgroundColor: "#0A0A0A", color: "white", fontSize: "16px" };
 
-  return (
-    <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif", color: "white" }}>
-      <h2 style={{ margin: "0 0 24px 0", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px", paddingLeft: "8px" }}>Manage Persons</h2>
-
-      <div style={{ backgroundColor: "#111111", padding: "24px", borderRadius: "32px", marginBottom: "32px", border: "1px solid #222" }}>
-        <h3 style={{ marginTop: 0, color: "#448aff", fontSize: "16px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "16px" }}>Add Colleague</h3>
-        <form onSubmit={handleAddPerson} style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <input type="text" placeholder="Name (e.g., Prashant)" value={newName} onChange={(e) => setNewName(e.target.value)} style={{ ...inputStyle, flex: 2, marginBottom: 0 }} />
-          <input type="number" placeholder="₹ Amount" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
-          <button type="submit" style={{ width: "100%", padding: "16px", backgroundColor: "#448aff", color: "white", border: "none", borderRadius: "20px", fontWeight: "800", fontSize: "16px", cursor: "pointer", marginTop: "12px", boxShadow: "0 4px 15px rgba(68, 138, 255, 0.3)" }}>
-            Add Person
-          </button>
-        </form>
+    return (
+    <div style={{ paddingBottom: "30px", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", padding: "0 8px" }}>
+        <h2 style={{ margin: 0, color: "var(--text-main)", fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px" }}>Yearly</h2>
+        <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: "10px 16px", borderRadius: "20px", border: "1px solid var(--border-strong)", background: "var(--bg-surface)", color: "var(--text-main)", fontSize: "16px", fontWeight: "600" }}>
+          {[...Array(5)].map((_, i) => { const year = (new Date().getFullYear() - 2 + i).toString(); return <option key={year} value={year}>{year}</option>; })}
+        </select>
       </div>
 
-      <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "16px", paddingLeft: "8px" }}>Saved Persons</h3>
-      {persons.length === 0 && <p style={{ color: "#666", paddingLeft: "8px", fontWeight: "600" }}>No persons added yet.</p>}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+        <div style={{ flex: 1, backgroundColor: "var(--bg-card)", padding: "20px", borderRadius: "32px", textAlign: "center", border: "1px solid var(--border-light)" }}>
+          <p style={{ margin: "0 0 8px 0", color: "var(--text-muted)", fontSize: "13px", fontWeight: "800", textTransform: "uppercase" }}>Yearly Total</p>
+          <h3 style={{ margin: 0, fontSize: "28px", color: "var(--accent-yellow)", fontWeight: "800" }}>₹{totalSpent}</h3>
+        </div>
+        <div style={{ flex: 1, backgroundColor: "var(--bg-card)", padding: "20px", borderRadius: "32px", textAlign: "center", border: "1px solid var(--border-light)" }}>
+          <p style={{ margin: "0 0 8px 0", color: "var(--text-muted)", fontSize: "13px", fontWeight: "800", textTransform: "uppercase" }}>Total Days</p>
+          <h3 style={{ margin: 0, fontSize: "28px", color: "var(--accent-blue)", fontWeight: "800" }}>{totalDays}</h3>
+        </div>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {persons.map((person) => (
-          <div key={person.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#111111", padding: "16px 20px", borderRadius: "24px", border: "1px solid #222" }}>
-            
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: "18px", fontWeight: "700", display: "block", marginBottom: "4px" }}>{person.name}</span>
-              <span style={{ color: "#888", fontSize: "14px", fontWeight: "600" }}>Default: ₹{person.defaultAmount}</span>
-            </div>
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button 
-                onClick={() => toggleStar(person)} 
-                title="Star to track settlements"
-                style={{ background: person.isStarred ? "#ffd74020" : "#1A1A1A", border: person.isStarred ? "1px solid #ffd74050" : "1px solid #333", color: person.isStarred ? "#ffd740" : "#666", padding: "12px", borderRadius: "16px", cursor: "pointer", fontSize: "16px", transition: "all 0.2s" }}
-              >
-                {person.isStarred ? "⭐ Tracked" : "☆ Track"}
-              </button>
-              <button 
-                onClick={() => handleDelete(person.id)} 
-                style={{ background: "#ff525215", border: "1px solid #ff525230", color: "#ff5252", padding: "12px 16px", borderRadius: "16px", cursor: "pointer", fontWeight: "700" }}
-              >
-                Delete
-              </button>
-            </div>
-
+      <h3 style={{ color: "var(--text-main)", fontSize: "18px", fontWeight: "800", marginBottom: "16px", paddingLeft: "8px" }}>Person Breakdown</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
+        {Object.entries(personBreakdown).sort((a, b) => b[1] - a[1]).map(([method, amount]) => (
+          <div key={method} style={{ display: "flex", justifyContent: "space-between", backgroundColor: "var(--bg-card)", padding: "18px 20px", borderRadius: "24px", color: "var(--text-main)", border: "1px solid var(--border-light)" }}>
+            <span style={{fontWeight: "700"}}>{method}</span><strong style={{ color: "var(--accent-purple)", fontSize: "16px" }}>₹{amount}</strong>
           </div>
         ))}
       </div>
-      <p style={{ color: "#666", fontSize: "13px", marginTop: "24px", textAlign: "center", padding: "0 20px" }}>
-        Tip: Star a person (⭐) to automatically track their monthly settlements in the Pay tab.
-      </p>
+
+      <h3 style={{ color: "var(--text-main)", fontSize: "18px", fontWeight: "800", marginBottom: "16px", paddingLeft: "8px" }}>Monthly Breakdown</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "32px" }}>
+        {Object.entries(monthlyBreakdown).map(([key, data]) => (
+          <div key={key} onClick={() => navigateTo("dashboard", key)} style={{ display: "flex", justifyContent: "space-between", backgroundColor: "var(--bg-surface)", padding: "18px 20px", borderRadius: "24px", color: "var(--text-main)", border: "1px solid var(--border-strong)", borderLeft: data.amount > 0 ? "6px solid var(--accent-green)" : "1px solid var(--border-strong)", cursor: "pointer", transition: "all 0.2s" }}>
+            <span style={{fontWeight: "700"}}>{data.name} <span style={{fontSize: "13px", color: "var(--text-muted)", marginLeft: "8px", fontWeight: "800"}}>→ View</span></span>
+            <strong style={{ color: data.amount > 0 ? "var(--text-main)" : "var(--text-faded)", fontSize: "16px" }}>₹{data.amount}</strong>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={handleExport} style={{ width: "100%", padding: "18px", backgroundColor: "var(--accent-green)", color: "#000", border: "none", borderRadius: "24px", fontSize: "16px", fontWeight: "800", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 4px 15px rgba(105, 240, 174, 0.3)" }}>
+        <span>📊</span> Download Excel Data
+      </button>
     </div>
   );
-}
