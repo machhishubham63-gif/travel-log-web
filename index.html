@@ -2,16 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
-    <link rel="manifest" href="/manifest.json?v=4" />
+    <link rel="manifest" href="/manifest.json?v=5" />
     <meta name="theme-color" content="#000000" />
-    <meta name="background-color" content="#000000" />
     
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
 
     <title>Travel Log</title>
+
+    <style>
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #000000 !important; /* Pure OLED Black */
+        width: 100vw;
+        min-height: 100vh;
+        overflow-x: hidden; /* Prevents side-to-side wiggling */
+        -webkit-tap-highlight-color: transparent; /* Removes the ugly blue flash when tapping buttons on Android */
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
@@ -20,7 +31,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js?v=4');
+          navigator.serviceWorker.register('/sw.js?v=5');
         });
       }
     </script>
