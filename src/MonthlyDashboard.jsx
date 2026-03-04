@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 export default function MonthlyDashboard({ user }) {
-  // Default to the current month (Format: YYYY-MM)
   const [monthKey, setMonthKey] = useState(new Date().toISOString().substring(0, 7));
   const [travels, setTravels] = useState([]);
   const [persons, setPersons] = useState([]);
+  const [isFinalized, setIsFinalized] = useState(false); // NEW: Track lock status
 
-  // Fetch Travels for the selected month
+  // 1. Fetch Travels
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -22,7 +22,7 @@ export default function MonthlyDashboard({ user }) {
     return () => unsubscribe();
   }, [user, monthKey]);
 
-  // Fetch Persons (to know who is starred for settlements)
+  // 2. Fetch Persons
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "persons"), where("userId", "==", user.uid));
@@ -32,6 +32,40 @@ export default function MonthlyDashboard({ user }) {
     return () => unsubscribe();
   }, [user]);
 
+  // 3. NEW: Fetch Month Finalization Status
+  useEffect(() => {
+    if (!user) return;
+    // We use a specific ID format for the month document: "user123_2026-03"
+    const monthDocId = `${user.uid}_${monthKey}`;
+    const unsubscribe = onSnapshot(doc(db, "months", monthDocId), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().isFinalized) {
+        setIsFinalized(true);
+      } else {
+        setIsFinalized(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [user, monthKey]);
+
+  // NEW: Handle Finalize Month
+  const handleFinalize = async () => {
+    if (window.confirm(`Are you absolutely sure you want to finalize ${monthKey}? You will NOT be able to add, edit, or delete trips for this month once it is locked.`)) {
+      try {
+        const monthDocId = `${user.uid}_${monthKey}`;
+        await setDoc(doc(db, "months", monthDocId), {
+          userId: user.uid,
+          monthKey: monthKey,
+          isFinalized: true,
+          finalizedAt: new Date()
+        });
+        alert(`${monthKey} has been permanently locked.`);
+      } catch (error) {
+        console.error("Error finalizing month:", error);
+        alert("Failed to finalize month. Check your connection.");
+      }
+    }
+  };
+
   // --- CALCULATIONS ---
   let totalSpent = 0;
   let travelDays = 0;
@@ -40,7 +74,6 @@ export default function MonthlyDashboard({ user }) {
   const methodBreakdown = {};
   const settlementTotals = {}; 
 
-  // Initialize settlement totals for "Starred" persons only
   persons.filter(p => p.isStarred).forEach(p => {
     settlementTotals[p.name] = 0;
   });
@@ -52,9 +85,7 @@ export default function MonthlyDashboard({ user }) {
       
       if (t.morning) {
         morningTotal += t.morning.amount || 0;
-        // Add to method breakdown
         methodBreakdown[t.morning.method] = (methodBreakdown[t.morning.method] || 0) + (t.morning.amount || 0);
-        // Add to settlement if they are a starred person
         if (settlementTotals[t.morning.method] !== undefined) {
           settlementTotals[t.morning.method] += t.morning.amount || 0;
         }
@@ -84,6 +115,22 @@ export default function MonthlyDashboard({ user }) {
         />
       </div>
 
+      {/* NEW: Finalization Banner */}
+      <div style={{ marginBottom: "20px" }}>
+        {isFinalized ? (
+          <div style={{ backgroundColor: "#064e3b", color: "#34d399", padding: "12px", borderRadius: "8px", textAlign: "center", fontWeight: "bold", border: "1px solid #059669" }}>
+            🔒 Month Locked & Finalized
+          </div>
+        ) : (
+          <button 
+            onClick={handleFinalize}
+            style={{ width: "100%", padding: "12px", backgroundColor: "#ef4444", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+          >
+            ⚠️ Finalize Month (Lock Entries)
+          </button>
+        )}
+      </div>
+
       {/* Main Stats Cards */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         <div style={{ flex: 1, backgroundColor: "#2d2d2d", padding: "15px", borderRadius: "8px", textAlign: "center" }}>
@@ -102,7 +149,7 @@ export default function MonthlyDashboard({ user }) {
         <span><strong style={{ color: "#f472b6" }}>🌙 Evening:</strong> ₹{eveningTotal}</span>
       </div>
 
-      {/* Settlement Preview (Who you owe) */}
+      {/* Settlement Preview */}
       <h3 style={{ borderBottom: "1px solid #333", paddingBottom: "8px", marginBottom: "12px" }}>Settlement Preview</h3>
       {Object.keys(settlementTotals).length === 0 ? (
         <p style={{ color: "#888", fontSize: "14px" }}>No starred persons found.</p>
