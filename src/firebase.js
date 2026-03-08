@@ -1,8 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-// NEW: Import the offline caching tools instead of getFirestore
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
+// IMPORTANT: Keep YOUR actual Firebase config here! Do not overwrite this block with empty strings.
 const firebaseConfig = {
   apiKey: "AIzaSyDPxWCiZJLtfb9uC5JM9oymGbiU2nB_aiI",
   authDomain: "travel-log-e100c.firebaseapp.com",
@@ -12,11 +12,17 @@ const firebaseConfig = {
   appId: "1:70640769799:web:75c41a674290efffc543a2"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// NEW: Initialize Firestore with Offline Persistence enabled
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+// --- NEW: FIREBASE OFFLINE ENGINE ---
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    console.warn("Multiple tabs open, offline mode only works in one tab at a time.");
+  } else if (err.code === 'unimplemented') {
+    console.warn("Your browser doesn't support offline storage.");
+  }
 });
+
+export { auth, db };
