@@ -7,6 +7,10 @@ export default function PersonsManager({ user }) {
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState("");
 
+  // NEW: State for our inline editor
+  const [editingId, setEditingId] = useState(null);
+  const [editAmount, setEditAmount] = useState("");
+
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "persons"), where("userId", "==", user.uid));
@@ -28,11 +32,29 @@ export default function PersonsManager({ user }) {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this person?")) await deleteDoc(doc(db, "persons", id));
+    if (window.confirm("Delete this person? (Past trips with them will still remain safely in your history.)")) {
+      await deleteDoc(doc(db, "persons", id));
+    }
   };
 
   const toggleStar = async (person) => {
     await updateDoc(doc(db, "persons", person.id), { isStarred: !person.isStarred });
+  };
+
+  // NEW: Start editing a specific person
+  const startEditing = (person) => {
+    setEditingId(person.id);
+    setEditAmount(person.defaultAmount.toString());
+  };
+
+  // NEW: Save the new amount to Firebase
+  const handleSaveEdit = async (personId) => {
+    if (editAmount === "") return;
+    try {
+      await updateDoc(doc(db, "persons", personId), { defaultAmount: Number(editAmount) });
+      setEditingId(null);
+      setEditAmount("");
+    } catch (error) { alert("Failed to update amount."); }
   };
 
   const inputStyle = { width: "100%", padding: "16px", marginBottom: "12px", boxSizing: "border-box", borderRadius: "16px", border: "1px solid var(--border-strong)", backgroundColor: "var(--bg-input)", color: "var(--text-main)", fontSize: "16px", fontWeight: "600" };
@@ -53,19 +75,34 @@ export default function PersonsManager({ user }) {
       <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "16px", paddingLeft: "8px" }}>Saved Persons</h3>
       {persons.length === 0 && <p style={{ color: "var(--text-muted)", paddingLeft: "8px", fontWeight: "600" }}>No persons added yet.</p>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {persons.map((person) => (
-          <div key={person.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-card)", padding: "16px 20px", borderRadius: "24px", border: "1px solid var(--border-light)" }}>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: "18px", fontWeight: "800", display: "block", marginBottom: "4px" }}>{person.name}</span>
-              <span style={{ color: "var(--text-muted)", fontSize: "14px", fontWeight: "600" }}>Default: ₹{person.defaultAmount}</span>
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => toggleStar(person)} style={{ background: person.isStarred ? "var(--accent-yellow)" : "var(--bg-surface)", border: person.isStarred ? "1px solid var(--accent-yellow)" : "1px solid var(--border-strong)", color: person.isStarred ? "#000" : "var(--text-muted)", padding: "12px", borderRadius: "16px", cursor: "pointer", fontSize: "16px", fontWeight: "800", transition: "all 0.2s" }}>
+          <div key={person.id} style={{ display: "flex", flexDirection: "column", gap: "16px", backgroundColor: "var(--bg-card)", padding: "20px", borderRadius: "24px", border: "1px solid var(--border-light)" }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "20px", fontWeight: "800" }}>{person.name}</span>
+              <button onClick={() => toggleStar(person)} style={{ background: person.isStarred ? "var(--accent-yellow)" : "var(--bg-surface)", border: person.isStarred ? "1px solid var(--accent-yellow)" : "1px solid var(--border-strong)", color: person.isStarred ? "#000" : "var(--text-muted)", padding: "8px 16px", borderRadius: "16px", cursor: "pointer", fontSize: "14px", fontWeight: "800", transition: "all 0.2s" }}>
                 {person.isStarred ? "⭐ Tracked" : "☆ Track"}
               </button>
-              <button onClick={() => handleDelete(person.id)} style={{ background: "var(--accent-red-bg)", border: "1px solid var(--accent-red)", color: "var(--accent-red)", padding: "12px 16px", borderRadius: "16px", cursor: "pointer", fontWeight: "800" }}>Delete</button>
             </div>
+
+            {/* THE NEW EDITING TOGGLE */}
+            {editingId === person.id ? (
+              <div style={{ display: "flex", gap: "8px", alignItems: "center", animation: "fadeIn 0.2s" }}>
+                <input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} style={{ ...inputStyle, marginBottom: 0, padding: "12px", flex: 1 }} autoFocus />
+                <button onClick={() => handleSaveEdit(person.id)} style={{ padding: "12px 20px", backgroundColor: "var(--accent-green)", color: "#000", border: "none", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>Save</button>
+                <button onClick={() => setEditingId(null)} style={{ padding: "12px 20px", backgroundColor: "var(--bg-input)", color: "var(--text-main)", border: "1px solid var(--border-strong)", borderRadius: "16px", fontWeight: "800", cursor: "pointer" }}>Cancel</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "var(--bg-input)", padding: "12px 16px", borderRadius: "16px", border: "1px solid var(--border-strong)" }}>
+                <span style={{ color: "var(--text-muted)", fontSize: "15px", fontWeight: "600" }}>Default: <strong style={{color: "var(--text-main)"}}>₹{person.defaultAmount}</strong></span>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button onClick={() => startEditing(person)} style={{ background: "transparent", border: "none", color: "var(--accent-blue)", fontWeight: "800", cursor: "pointer", fontSize: "14px", padding: 0 }}>Edit ₹</button>
+                  <button onClick={() => handleDelete(person.id)} style={{ background: "transparent", border: "none", color: "var(--accent-red)", fontWeight: "800", cursor: "pointer", fontSize: "14px", padding: 0 }}>Delete</button>
+                </div>
+              </div>
+            )}
+            
           </div>
         ))}
       </div>
